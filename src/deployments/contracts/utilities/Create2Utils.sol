@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 library Create2Utils {
   // https://github.com/safe-global/safe-singleton-factory
-  address public constant CREATE2_FACTORY = 0x914d7Fec6aaC8cd542e72Bca78B30650d45643d7;
+  address public constant CREATE2_FACTORY = 0xAD1F46046785C46f31c5f6D0069C31604B642014;
 
   function _create2Deploy(bytes32 salt, bytes memory bytecode) internal returns (address) {
     if (isContractDeployed(CREATE2_FACTORY) == false) {

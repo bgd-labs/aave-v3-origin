@@ -5,7 +5,6 @@ out/
 # general
 .env
 .env.bk
-reports/
 diffs/
 downloads/
 

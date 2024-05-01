@@ -35,3 +35,12 @@ download :; cast etherscan-source --chain ${chain} -d src/etherscan/${chain}_${a
 git-diff :
 	@mkdir -p diffs
 	@printf '%s\n%s\n%s\n' "\`\`\`diff" "$$(git diff --no-index --diff-algorithm=patience --ignore-space-at-eol ${before} ${after})" "\`\`\`" > diffs/${out}.md
+
+deploy-libs-broadcast	:;
+	forge script -vvv scripts/misc/LibraryPreCompileOne.sol --rpc-url $(net) --private-key ${PRIVATE_KEY} --sender ${SENDER} --broadcast --gas-estimate-multiplier 101 && \
+	sleep 1 && \
+	forge script -vvv scripts/misc/LibraryPreCompileTwo.sol --rpc-url $(net) --private-key ${PRIVATE_KEY} --sender ${SENDER} --broadcast  --gas-estimate-multiplier 101
+
+deploy-v3-batched-broadcast :; make deploy-libs-broadcast && sleep 1 && forge script scripts/DeployAaveV3MarketBatched.sol  --rpc-url ${net} --private-key ${PRIVATE_KEY} --sender ${SENDER} --broadcast
+
+deploy-v3-batched-broadcast-no-libs :; forge script scripts/DeployAaveV3MarketBatched.sol  --rpc-url ${net} --private-key ${PRIVATE_KEY} --sender ${SENDER} --broadcast
