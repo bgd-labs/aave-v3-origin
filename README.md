@@ -28,6 +28,8 @@ forge install
 bun install
 ```
 
+Make sure solc is installed as well, as it is used to compile the yul CREATE_2_FACTORY contract via ffi.
+
 <br>
 
 ## Tests
