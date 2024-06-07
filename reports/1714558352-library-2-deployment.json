@@ -1,6 +1,0 @@
-{
-  "flashLoanLogic": "0x441287d5Ca8Cf5e8e64946857D3508D77a395e6C",
-  "liquidationLogic": "0x6244392E1F14D9d136f30dEAB72b41D1f69b78Bd",
-  "poolLogic": "0x55e54FcdBfEA2D2015b3172d4a73f674Ac48d85d",
-  "supplyLogic": "0x4971B6E96661F619d2a3C06a8befff06b451EA5c"
-}

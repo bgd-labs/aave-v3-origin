@@ -33,9 +33,10 @@ contract LibraryPreCompileTwo is FfiUtils, Script, DeployUtils {
 
   function _deployAndWriteLibrariesConfig() internal {
     verifyEnvironment();
+    address create2Factory = vm.envAddress('CREATE_2_FACTORY');
 
     vm.startBroadcast();
-    AaveV3LibrariesBatch2 batch2 = new AaveV3LibrariesBatch2();
+    AaveV3LibrariesBatch2 batch2 = new AaveV3LibrariesBatch2(create2Factory);
     vm.stopBroadcast();
     LibrariesReport memory report = batch2.getLibrariesReport();
 

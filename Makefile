@@ -37,11 +37,16 @@ git-diff :
 	@mkdir -p diffs
 	@printf '%s\n%s\n%s\n' "\`\`\`diff" "$$(git diff --no-index --diff-algorithm=patience --ignore-space-at-eol ${before} ${after})" "\`\`\`" > diffs/${out}.md
 
-deploy-libs-broadcast	:;
-	forge script -vvv scripts/misc/LibraryPreCompileOne.sol --rpc-url $(net) --private-key ${PRIVATE_KEY} --sender ${SENDER} --broadcast --gas-estimate-multiplier 101 && \
+deploy-create2-factory :;
+	forge script -vvv scripts/misc/DeployCreate2Factory.sol --rpc-url $(net) --private-key ${PRIVATE_KEY} --sender ${SENDER} --gas-estimate-multiplier 200 --broadcast
+
+deploy-libs	:;
+	make deploy-create2-factory && \
 	sleep 1 && \
-	forge script -vvv scripts/misc/LibraryPreCompileTwo.sol --rpc-url $(net) --private-key ${PRIVATE_KEY} --sender ${SENDER} --broadcast  --gas-estimate-multiplier 101
+	forge script -vvv scripts/misc/LibraryPreCompileOne.sol --rpc-url $(net) --private-key ${PRIVATE_KEY} --sender ${SENDER} --gas-estimate-multiplier 200 --broadcast && \
+	sleep 1 && \
+	forge script -vvv scripts/misc/LibraryPreCompileTwo.sol --rpc-url $(net) --private-key ${PRIVATE_KEY} --sender ${SENDER} --gas-estimate-multiplier 200 --broadcast
 
-deploy-v3-batched-broadcast :; make deploy-libs-broadcast && sleep 1 && forge script scripts/DeployAaveV3MarketBatched.sol  --rpc-url ${net} --private-key ${PRIVATE_KEY} --sender ${SENDER} --broadcast
+deploy-v3-batched-no-libs :; forge script scripts/DeployAaveV3MarketBatched.sol  --rpc-url ${net} --private-key ${PRIVATE_KEY} --sender ${SENDER} --gas-estimate-multiplier 200 --broadcast
 
-deploy-v3-batched-broadcast-no-libs :; forge script scripts/DeployAaveV3MarketBatched.sol  --rpc-url ${net} --private-key ${PRIVATE_KEY} --sender ${SENDER} --broadcast
+deploy-v3-batched :; make deploy-libs && sleep 1 && forge script scripts/DeployAaveV3MarketBatched.sol  --rpc-url ${net} --private-key ${PRIVATE_KEY} --sender ${SENDER} --gas-estimate-multiplier 200 --broadcast

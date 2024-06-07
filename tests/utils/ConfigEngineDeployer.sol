@@ -19,21 +19,23 @@ import {EModeEngine} from 'aave-v3-periphery/contracts/v3-config-engine/librarie
 import {ListingEngine} from 'aave-v3-periphery/contracts/v3-config-engine/libraries/ListingEngine.sol';
 
 library ConfigEngineDeployer {
+  address public constant CREATE_2_FACTORY = 0x914d7Fec6aaC8cd542e72Bca78B30650d45643d7;
+
   function deployEngine(Vm vm, MarketReport memory report) internal returns (address) {
     // Etch the create2 factory in the local env
     vm.etch(
-      0x914d7Fec6aaC8cd542e72Bca78B30650d45643d7,
+      CREATE_2_FACTORY,
       hex'7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf3'
     );
     IAaveV3ConfigEngine.EngineLibraries memory engineLibraries = IAaveV3ConfigEngine
       .EngineLibraries({
-        listingEngine: Create2Utils._create2Deploy('v1', type(ListingEngine).creationCode),
-        eModeEngine: Create2Utils._create2Deploy('v1', type(EModeEngine).creationCode),
-        borrowEngine: Create2Utils._create2Deploy('v1', type(BorrowEngine).creationCode),
-        collateralEngine: Create2Utils._create2Deploy('v1', type(CollateralEngine).creationCode),
-        priceFeedEngine: Create2Utils._create2Deploy('v1', type(PriceFeedEngine).creationCode),
-        rateEngine: Create2Utils._create2Deploy('v1', type(RateEngine).creationCode),
-        capsEngine: Create2Utils._create2Deploy('v1', type(CapsEngine).creationCode)
+        listingEngine: Create2Utils._create2Deploy(CREATE_2_FACTORY, 'v1', type(ListingEngine).creationCode),
+        eModeEngine: Create2Utils._create2Deploy(CREATE_2_FACTORY, 'v1', type(EModeEngine).creationCode),
+        borrowEngine: Create2Utils._create2Deploy(CREATE_2_FACTORY, 'v1', type(BorrowEngine).creationCode),
+        collateralEngine: Create2Utils._create2Deploy(CREATE_2_FACTORY, 'v1', type(CollateralEngine).creationCode),
+        priceFeedEngine: Create2Utils._create2Deploy(CREATE_2_FACTORY, 'v1', type(PriceFeedEngine).creationCode),
+        rateEngine: Create2Utils._create2Deploy(CREATE_2_FACTORY, 'v1', type(RateEngine).creationCode),
+        capsEngine: Create2Utils._create2Deploy(CREATE_2_FACTORY, 'v1', type(CapsEngine).creationCode)
       });
 
     IAaveV3ConfigEngine.EngineConstants memory engineConstants = IAaveV3ConfigEngine

@@ -10,20 +10,21 @@ import {PoolLogic} from 'aave-v3-core/contracts/protocol/libraries/logic/PoolLog
 import {SupplyLogic} from 'aave-v3-core/contracts/protocol/libraries/logic/SupplyLogic.sol';
 
 contract AaveV3LibrariesBatch2 is LibraryReportStorage {
-  constructor() {
-    _librariesReport = _deployAaveV3Libraries();
+  constructor(address create2Factory) {
+    _librariesReport = _deployAaveV3Libraries(create2Factory);
   }
 
-  function _deployAaveV3Libraries() internal returns (LibrariesReport memory libReport) {
+  function _deployAaveV3Libraries(address create2Factory) internal returns (LibrariesReport memory libReport) {
     bytes32 salt = keccak256('AAVE_V3_LIBRARIES_BATCH');
 
-    libReport.flashLoanLogic = Create2Utils._create2Deploy(salt, type(FlashLoanLogic).creationCode);
+    libReport.flashLoanLogic = Create2Utils._create2Deploy(create2Factory, salt, type(FlashLoanLogic).creationCode);
     libReport.liquidationLogic = Create2Utils._create2Deploy(
+      create2Factory,
       salt,
       type(LiquidationLogic).creationCode
     );
-    libReport.poolLogic = Create2Utils._create2Deploy(salt, type(PoolLogic).creationCode);
-    libReport.supplyLogic = Create2Utils._create2Deploy(salt, type(SupplyLogic).creationCode);
+    libReport.poolLogic = Create2Utils._create2Deploy(create2Factory, salt, type(PoolLogic).creationCode);
+    libReport.supplyLogic = Create2Utils._create2Deploy(create2Factory, salt, type(SupplyLogic).creationCode);
     return libReport;
   }
 }

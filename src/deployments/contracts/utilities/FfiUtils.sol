@@ -75,4 +75,25 @@ abstract contract FfiUtils {
 
     return found;
   }
+
+  function _create2FactoryPathExists() internal returns (bool) {
+    string
+      memory checkCommand = '[ -e .env ] && grep -q "CREATE_2_FACTORY" .env && echo true || echo false';
+    string[] memory command = new string[](3);
+
+    command[0] = 'bash';
+    command[1] = '-c';
+    command[2] = string(
+      abi.encodePacked(
+        'response="$(',
+        checkCommand,
+        ')"; cast abi-encode "response(bool)" $response;'
+      )
+    );
+    bytes memory res = vm.ffi(command);
+
+    bool found = abi.decode(res, (bool));
+
+    return found;
+  }
 }

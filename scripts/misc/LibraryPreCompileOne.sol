@@ -39,8 +39,10 @@ contract LibraryPreCompileOne is FfiUtils, Script, DeployUtils {
   }
 
   function _deployAndWriteLibrariesConfig() internal {
+    address create2Factory = vm.envAddress('CREATE_2_FACTORY');
+
     vm.startBroadcast();
-    AaveV3LibrariesBatch1 batch1 = new AaveV3LibrariesBatch1();
+    AaveV3LibrariesBatch1 batch1 = new AaveV3LibrariesBatch1(create2Factory);
     vm.stopBroadcast();
     LibrariesReport memory report = batch1.getLibrariesReport();
 

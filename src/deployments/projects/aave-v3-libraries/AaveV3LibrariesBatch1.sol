@@ -9,20 +9,21 @@ import {ConfiguratorLogic} from 'aave-v3-core/contracts/protocol/libraries/logic
 import {EModeLogic} from 'aave-v3-core/contracts/protocol/libraries/logic/EModeLogic.sol';
 
 contract AaveV3LibrariesBatch1 is LibraryReportStorage {
-  constructor() {
-    _librariesReport = _deployAaveV3Libraries();
+  constructor(address create2Factory) {
+    _librariesReport = _deployAaveV3Libraries(create2Factory);
   }
 
-  function _deployAaveV3Libraries() internal returns (LibrariesReport memory libReport) {
+  function _deployAaveV3Libraries(address create2Factory) internal returns (LibrariesReport memory libReport) {
     bytes32 salt = keccak256('AAVE_V3_LIBRARIES_BATCH');
 
-    libReport.borrowLogic = Create2Utils._create2Deploy(salt, type(BorrowLogic).creationCode);
-    libReport.bridgeLogic = Create2Utils._create2Deploy(salt, type(BridgeLogic).creationCode);
+    libReport.borrowLogic = Create2Utils._create2Deploy(create2Factory, salt, type(BorrowLogic).creationCode);
+    libReport.bridgeLogic = Create2Utils._create2Deploy(create2Factory, salt, type(BridgeLogic).creationCode);
     libReport.configuratorLogic = Create2Utils._create2Deploy(
+      create2Factory,
       salt,
       type(ConfiguratorLogic).creationCode
     );
-    libReport.eModeLogic = Create2Utils._create2Deploy(salt, type(EModeLogic).creationCode);
+    libReport.eModeLogic = Create2Utils._create2Deploy(create2Factory, salt, type(EModeLogic).creationCode);
     return libReport;
   }
 }
