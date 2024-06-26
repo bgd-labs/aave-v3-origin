@@ -11,79 +11,7 @@ import 'aave-v3-core/contracts/interfaces/IStableDebtToken.sol';
 import 'aave-v3-core/contracts/interfaces/IACLManager.sol';
 import 'aave-v3-core/contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
 import 'aave-v3-core/contracts/misc/AaveProtocolDataProvider.sol';
-import 'aave-v3-periphery/contracts/misc/UiPoolDataProviderV3.sol';
-import 'aave-v3-periphery/contracts/misc/UiIncentiveDataProviderV3.sol';
-import 'aave-v3-periphery/contracts/rewards/interfaces/IEmissionManager.sol';
-import 'aave-v3-periphery/contracts/rewards/interfaces/IRewardsController.sol';
-import 'aave-v3-periphery/contracts/misc/WalletBalanceProvider.sol';
-import 'aave-v3-periphery/contracts/adapters/paraswap/ParaSwapLiquiditySwapAdapter.sol';
-import 'aave-v3-periphery/contracts/adapters/paraswap/ParaSwapRepayAdapter.sol';
-import 'aave-v3-periphery/contracts/adapters/paraswap/ParaSwapWithdrawSwapAdapter.sol';
-import 'aave-v3-periphery/contracts/misc/interfaces/IWrappedTokenGatewayV3.sol';
-import 'aave-v3-core/contracts/misc/L2Encoder.sol';
-import {ICollector} from 'aave-v3-periphery/contracts/treasury/ICollector.sol';
 import {ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/ProxyAdmin.sol';
-
-struct ContractsReport {
-  IPoolAddressesProviderRegistry poolAddressesProviderRegistry;
-  IPoolAddressesProvider poolAddressesProvider;
-  IPool poolProxy;
-  IPool poolImplementation;
-  IPoolConfigurator poolConfiguratorProxy;
-  IPoolConfigurator poolConfiguratorImplementation;
-  AaveProtocolDataProvider protocolDataProvider;
-  IAaveOracle aaveOracle;
-  IACLManager aclManager;
-  ICollector treasury;
-  IDefaultInterestRateStrategyV2 defaultInterestRateStrategyV2;
-  ProxyAdmin proxyAdmin;
-  ICollector treasuryImplementation;
-  IWrappedTokenGatewayV3 wrappedTokenGateway;
-  WalletBalanceProvider walletBalanceProvider;
-  UiIncentiveDataProviderV3 uiIncentiveDataProvider;
-  UiPoolDataProviderV3 uiPoolDataProvider;
-  ParaSwapLiquiditySwapAdapter paraSwapLiquiditySwapAdapter;
-  ParaSwapRepayAdapter paraSwapRepayAdapter;
-  ParaSwapWithdrawSwapAdapter paraSwapWithdrawSwapAdapter;
-  L2Encoder l2Encoder;
-  IAToken aToken;
-  IVariableDebtToken variableDebtToken;
-  IStableDebtToken stableDebtToken;
-  IEmissionManager emissionManager;
-  IRewardsController rewardsControllerImplementation;
-  IRewardsController rewardsControllerProxy;
-}
-
-struct MarketReport {
-  address poolAddressesProviderRegistry;
-  address poolAddressesProvider;
-  address poolProxy;
-  address poolImplementation;
-  address poolConfiguratorProxy;
-  address poolConfiguratorImplementation;
-  address protocolDataProvider;
-  address aaveOracle;
-  address defaultInterestRateStrategyV2;
-  address aclManager;
-  address treasury;
-  address proxyAdmin;
-  address treasuryImplementation;
-  address wrappedTokenGateway;
-  address walletBalanceProvider;
-  address uiIncentiveDataProvider;
-  address uiPoolDataProvider;
-  address paraSwapLiquiditySwapAdapter;
-  address paraSwapRepayAdapter;
-  address paraSwapWithdrawSwapAdapter;
-  address aaveParaSwapFeeClaimer;
-  address l2Encoder;
-  address aToken;
-  address variableDebtToken;
-  address stableDebtToken;
-  address emissionManager;
-  address rewardsControllerImplementation;
-  address rewardsControllerProxy;
-}
 
 struct LibrariesReport {
   address borrowLogic;
