@@ -16,7 +16,7 @@ library EIP712SigUtils {
     bytes memory name,
     bytes memory revision,
     address contractAddress
-  ) public view returns (bytes32) {
+  ) internal view returns (bytes32) {
     return
       keccak256(
         abi.encode(
@@ -65,7 +65,7 @@ library EIP712SigUtils {
     bytes memory name,
     bytes memory revision,
     address contractAddress
-  ) public view returns (bytes32) {
+  ) internal view returns (bytes32) {
     return
       keccak256(
         abi.encodePacked(
@@ -96,7 +96,7 @@ library EIP712SigUtils {
     bytes memory name,
     bytes memory revision,
     address contractAddress
-  ) public view returns (bytes32) {
+  ) internal view returns (bytes32) {
     return
       keccak256(
         abi.encodePacked(
