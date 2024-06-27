@@ -31,6 +31,9 @@ coverage :; forge coverage --report lcov && \
 	&& coverage=$$(awk -F '[<>]' '/headerCovTableEntryHi/{print $3}' ./report/index.html | sed 's/[^0-9.]//g' | head -n 1); \
 	wget -O ./report/coverage.svg "https://img.shields.io/badge/coverage-$${coverage}%25-brightgreen"
 
+deploy-libs	:;
+	forge script --zksync --system-mode=true -vvvvvvvv scripts/misc/LibraryPreCompileOne.sol --rpc-url $(net) --private-key ${PRIVATE_KEY} --sender ${SENDER} --gas-estimate-multiplier 200 --broadcast
+
 # Utilities
 download :; cast etherscan-source --chain ${chain} -d src/etherscan/${chain}_${address} ${address}
 git-diff :
