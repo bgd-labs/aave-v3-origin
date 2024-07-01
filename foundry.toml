@@ -13,6 +13,9 @@ remappings = [
 ]
 fs_permissions = [{access = "write", path = "./reports"}, {access = "read", path = "./out" }, {access = "read", path = "./config"}]
 ffi = true
+compile = true
+fallback_oz = true
+mode = '3'
 
 [fuzz]
 runs = 1000
