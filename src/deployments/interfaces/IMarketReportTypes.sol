@@ -10,7 +10,6 @@ import 'aave-v3-core/contracts/interfaces/IVariableDebtToken.sol';
 import 'aave-v3-core/contracts/interfaces/IStableDebtToken.sol';
 import 'aave-v3-core/contracts/interfaces/IACLManager.sol';
 import 'aave-v3-core/contracts/interfaces/IDefaultInterestRateStrategyV2.sol';
-import 'aave-v3-core/contracts/misc/AaveProtocolDataProvider.sol';
 import {ProxyAdmin} from 'solidity-utils/contracts/transparent-proxy/ProxyAdmin.sol';
 
 struct LibrariesReport {
