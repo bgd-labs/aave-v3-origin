@@ -17,15 +17,12 @@ contract AaveV3LibrariesBatch1 is LibraryReportStorage {
     bytes32 salt = keccak256('AAVE_V3_LIBRARIES_BATCH');
 
     libReport.borrowLogic = Create2Utils._create2Deploy(salt, type(BorrowLogic).creationCode);
-    libReport.bridgeLogic = address(5);
-    // Create2Utils._create2Deploy(salt, type(BridgeLogic).creationCode);
-    libReport.configuratorLogic = address(5);
-    // Create2Utils._create2Deploy(
-    //   salt,
-    //   type(ConfiguratorLogic).creationCode
-    // );
-    libReport.eModeLogic = address(5);
-    // Create2Utils._create2Deploy(salt, type(EModeLogic).creationCode);
+    libReport.bridgeLogic = Create2Utils._create2Deploy(salt, type(BridgeLogic).creationCode);
+    libReport.configuratorLogic = Create2Utils._create2Deploy(
+       salt,
+       type(ConfiguratorLogic).creationCode
+    );
+    libReport.eModeLogic = Create2Utils._create2Deploy(salt, type(EModeLogic).creationCode);
     return libReport;
   }
 }
