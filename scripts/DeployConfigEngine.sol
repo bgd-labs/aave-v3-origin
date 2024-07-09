@@ -88,7 +88,7 @@ contract DeployEngineEth is Script {
     DeployConfigEngineLib._deployConfigEngine(
       address(AaveV3Ethereum.POOL),
       address(AaveV3Ethereum.POOL_CONFIGURATOR),
-      address(0), // TODO: please add the newly deployed interest rate strategy here
+      0x847A3364Cc5fE389283bD821cfC8A477288D9e82,
       address(AaveV3Ethereum.ORACLE),
       address(AaveV3Ethereum.DEFAULT_INCENTIVES_CONTROLLER),
       address(AaveV3Ethereum.COLLECTOR),
@@ -107,7 +107,7 @@ contract DeployEnginePol is Script {
     DeployConfigEngineLib._deployConfigEngine(
       address(AaveV3Polygon.POOL),
       address(AaveV3Polygon.POOL_CONFIGURATOR),
-      address(0), // TODO: please add the newly deployed interest rate strategy here
+      0x21128C8f5AE37904c9082D932928FE0C2be1Ff73,
       address(AaveV3Polygon.ORACLE),
       address(AaveV3Polygon.DEFAULT_INCENTIVES_CONTROLLER),
       address(AaveV3Polygon.COLLECTOR),
@@ -126,7 +126,7 @@ contract DeployEngineAva is Script {
     DeployConfigEngineLib._deployConfigEngine(
       address(AaveV3Avalanche.POOL),
       address(AaveV3Avalanche.POOL_CONFIGURATOR),
-      address(0), // TODO: please add the newly deployed interest rate strategy here
+      0x43dD6f474e436348db037BAeA24eD02E68c475bE,
       address(AaveV3Avalanche.ORACLE),
       address(AaveV3Avalanche.DEFAULT_INCENTIVES_CONTROLLER),
       address(AaveV3Avalanche.COLLECTOR),
@@ -145,7 +145,7 @@ contract DeployEngineArb is Script {
     DeployConfigEngineLib._deployConfigEngine(
       address(AaveV3Arbitrum.POOL),
       address(AaveV3Arbitrum.POOL_CONFIGURATOR),
-      address(0), // TODO: please add the newly deployed interest rate strategy here
+      0xC2c6DF6a8B6cc79a6F927a1FFAE602c701C374Ea,
       address(AaveV3Arbitrum.ORACLE),
       address(AaveV3Arbitrum.DEFAULT_INCENTIVES_CONTROLLER),
       address(AaveV3Arbitrum.COLLECTOR),
@@ -164,7 +164,7 @@ contract DeployEngineOpt is Script {
     DeployConfigEngineLib._deployConfigEngine(
       address(AaveV3Optimism.POOL),
       address(AaveV3Optimism.POOL_CONFIGURATOR),
-      address(0), // TODO: please add the newly deployed interest rate strategy here
+      0xC2c6DF6a8B6cc79a6F927a1FFAE602c701C374Ea,
       address(AaveV3Optimism.ORACLE),
       address(AaveV3Optimism.DEFAULT_INCENTIVES_CONTROLLER),
       address(AaveV3Optimism.COLLECTOR),
@@ -184,7 +184,7 @@ contract DeployEngineBase is Script {
     DeployConfigEngineLib._deployConfigEngine(
       address(AaveV3Base.POOL),
       address(AaveV3Base.POOL_CONFIGURATOR),
-      address(0), // TODO: please add the newly deployed interest rate strategy here
+      0x46Da028a47Ed58026aCbFbE91eeA51CcB062134E,
       address(AaveV3Base.ORACLE),
       address(AaveV3Base.DEFAULT_INCENTIVES_CONTROLLER),
       address(AaveV3Base.COLLECTOR),
@@ -203,7 +203,7 @@ contract DeployEngineGno is Script {
     DeployConfigEngineLib._deployConfigEngine(
       address(AaveV3Gnosis.POOL),
       address(AaveV3Gnosis.POOL_CONFIGURATOR),
-      address(0), // TODO: please add the newly deployed interest rate strategy here
+      0x98619395148C348e9A09C7D34290B1E9e7715A3E,
       address(AaveV3Gnosis.ORACLE),
       address(AaveV3Gnosis.DEFAULT_INCENTIVES_CONTROLLER),
       address(AaveV3Gnosis.COLLECTOR),
@@ -222,7 +222,7 @@ contract DeployEngineMetis is Script {
     DeployConfigEngineLib._deployConfigEngine(
       address(AaveV3Metis.POOL),
       address(AaveV3Metis.POOL_CONFIGURATOR),
-      address(0), // TODO: please add the newly deployed interest rate strategy here
+      0xE263434d0c71Ff6EB089034F2aFf89e9f6F714E8,
       address(AaveV3Metis.ORACLE),
       address(AaveV3Metis.DEFAULT_INCENTIVES_CONTROLLER),
       address(AaveV3Metis.COLLECTOR),
@@ -241,7 +241,7 @@ contract DeployEngineBNB is Script {
     DeployConfigEngineLib._deployConfigEngine(
       address(AaveV3BNB.POOL),
       address(AaveV3BNB.POOL_CONFIGURATOR),
-      address(0), // TODO: please add the newly deployed interest rate strategy here
+      0x51D86C833fC4F300196F028FEaC899a94eb82eFb,
       address(AaveV3BNB.ORACLE),
       address(AaveV3BNB.DEFAULT_INCENTIVES_CONTROLLER),
       address(AaveV3BNB.COLLECTOR),
@@ -260,7 +260,7 @@ contract DeployEngineScroll is Script {
     DeployConfigEngineLib._deployConfigEngine(
       address(AaveV3Scroll.POOL),
       address(AaveV3Scroll.POOL_CONFIGURATOR),
-      address(0), // TODO: please add the newly deployed interest rate strategy here
+      0xEC93d0BBA1b1e635ba0Fff4786dB323db49D99F0,
       address(AaveV3Scroll.ORACLE),
       address(AaveV3Scroll.DEFAULT_INCENTIVES_CONTROLLER),
       address(AaveV3Scroll.COLLECTOR),
