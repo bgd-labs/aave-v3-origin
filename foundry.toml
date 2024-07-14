@@ -12,10 +12,11 @@ remappings = [
 ]
 fs_permissions = [{access = "write", path = "./reports"}, {access = "read", path = "./out" }, {access = "read", path = "./config"}]
 ffi = true
+
+[profile.default.zksync]
 compile = true
 fallback_oz = true
 mode = '3'
-zksolc='./zksolc-v5.1.0'
 
 [fuzz]
 runs = 1000

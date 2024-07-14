@@ -32,7 +32,7 @@ coverage :; forge coverage --report lcov && \
 	wget -O ./report/coverage.svg "https://img.shields.io/badge/coverage-$${coverage}%25-brightgreen"
 
 deploy-libs	:;
-	forge script --zksync --legacy --system-mode=true -vvvvvvvv scripts/misc/LibraryPreCompileTwo.sol --rpc-url $(net) --private-key ${PRIVATE_KEY} --sender ${SENDER} --gas-estimate-multiplier 200 --broadcast
+	forge script --zksync --legacy --system-mode=true -vvvvvvvv scripts/misc/LibraryPreCompileTwo.sol --rpc-url $(net) --private-key ${PRIVATE_KEY} --sender ${SENDER} --skip-simulation --gas-limit 15000000 --broadcast --slow
 
 # Utilities
 download :; cast etherscan-source --chain ${chain} -d src/etherscan/${chain}_${address} ${address}
