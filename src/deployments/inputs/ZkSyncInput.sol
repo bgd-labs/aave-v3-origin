@@ -3,8 +3,8 @@ pragma solidity ^0.8.0;
 import './MarketInput.sol';
 
 contract ZkSyncInput is MarketInput {
-  address public constant GUARDIAN = 0x0000000000000000000000000000000000000000; // TODO
-  address public constant EXECUTOR_LVL_1 = 0x0000000000000000000000000000000000000000; // TODO
+  address public constant GUARDIAN = 0x6ec33534BE07d45cc4E02Fbd127F8ed2aE919a6b; // TODO: deployer address, should be changed later
+  address public constant EXECUTOR_LVL_1 = 0x04cE39789e11a49595cD0ECEf6f4Bd54ABF4d020;
 
   function _getMarketInput(
     address
@@ -28,7 +28,6 @@ contract ZkSyncInput is MarketInput {
     config.marketId = 'Aave V3 ZkSync Market';
     config.providerId = 44;
     config.oracleDecimals = 8;
-    config.proxyAdmin = 0x0000000000000000000000000000000000000000; // TODO
     // eth-usd chainlink price feed
     config
       .marketReferenceCurrencyPriceInUsdProxyAggregator = 0x6D41d1dc818112880b40e26BD6FD347E41008eDA;
