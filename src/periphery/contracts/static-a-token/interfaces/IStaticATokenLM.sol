@@ -219,4 +219,10 @@ interface IStaticATokenLM is IInitializableStaticATokenLM, IERC4626 {
    * @param paused boolean determining if the token should be paused or unpaused
    */
   function setPaused(bool paused) external;
+
+  /**
+   * @notice Returns the current asset price of the stataToken, priced by aave-oracle * exchangeRate.
+   * @return int256 the current asset price in 8 decimals.
+   */
+  function latestAnswer() external view returns (int256);
 }
