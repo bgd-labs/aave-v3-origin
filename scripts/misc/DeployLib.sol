@@ -3,19 +3,21 @@ pragma solidity ^0.8.0;
 
 import 'forge-std/console.sol';
 import {Script} from 'forge-std/Script.sol';
-import {Create2Utils} from 'src/deployments/contracts/utilities/Create2Utils.sol';
 import {BorrowLogic} from 'src/core/contracts/protocol/libraries/logic/BorrowLogic.sol';
+import {Create2Factory} from 'src/deployments/contracts/utilities/Create2Factory.sol';
 
 contract DeployLib is Script {
+  address public constant CREATE_2_FACTORY = 0xB1DDc8cfcB1A46095C6d5F81ad76F69188B381b8;
+
   function run() external {
     _deploy();
   }
 
   function _deploy() internal {
     vm.startBroadcast();
-    // Create2 Factory using: https://github.com/safe-global/safe-singleton-factory/blob/main/contracts-zk/SafeSingeltonFactory.sol
+    // Create2 Factory using: https://github.com/matter-labs/zksync/blob/master/contracts/contracts/Create2Factory.sol
 
-    Create2Utils.create2Deploy(
+    Create2Factory(CREATE_2_FACTORY).deploy(
       bytes32(0), // salt
       (type(BorrowLogic).creationCode)
     );
