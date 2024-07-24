@@ -41,6 +41,7 @@ bnb_testnet = "${RPC_BNB_TESTNET}"
 bnb = "${RPC_BNB}"
 gnosis = "${RPC_GNOSIS}"
 base = "${RPC_BASE}"
+zksync = "${RPC_ZKSYNC}"
 
 [etherscan]
 mainnet={key="${ETHERSCAN_API_KEY_MAINNET}",chainId=1}

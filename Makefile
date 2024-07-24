@@ -32,7 +32,7 @@ coverage :; forge coverage --report lcov && \
 	wget -O ./report/coverage.svg "https://img.shields.io/badge/coverage-$${coverage}%25-brightgreen"
 
 deploy-libs	:;
-	forge script --zksync --system-mode=true -vvvvvvvv scripts/misc/DeployLib.sol --rpc-url $(net) --private-key ${PRIVATE_KEY} --sender ${SENDER} --broadcast --slow --skip-simulation
+	forge script --zksync --system-mode=true -vvvvvvvv scripts/misc/DeployLib.sol:ZkDeployLib --rpc-url $(net) --private-key ${PRIVATE_KEY} --sender ${SENDER} --broadcast --slow
 
 # Utilities
 download :; cast etherscan-source --chain ${chain} -d src/etherscan/${chain}_${address} ${address}
