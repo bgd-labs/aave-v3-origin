@@ -105,6 +105,12 @@ contract StaticATokenLM is
     emit Initialized(newAToken, staticATokenName, staticATokenSymbol);
   }
 
+  ///@inheritdoc IInitializableStaticATokenLM
+  function upgradeInitialize() external initializer {
+    require(__deprecated != 0, 'MUST_ALREADY_BE_INITIALIZED');
+    __deprecated = 0; // cleanup storage
+  }
+
   /// @inheritdoc IRescuable
   function whoCanRescue() public view override returns (address) {
     return POOL_ADDRESSES_PROVIDER.getACLAdmin();
