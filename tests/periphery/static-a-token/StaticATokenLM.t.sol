@@ -69,7 +69,12 @@ contract StaticATokenLMTest is BaseTest {
     );
     uint256 stataPrice = uint256(staticATokenLM.latestAnswer());
     uint256 underlyingPrice = contracts.aaveOracle.getAssetPrice(UNDERLYING);
-    assertEq(stataPrice, (underlyingPrice * liquidityIndex) / 1e27);
+    uint256 expectedStataPrice = (underlyingPrice * liquidityIndex) / 1e27;
+    assertEq(stataPrice, expectedStataPrice);
+
+    // reverse the math to ensure precision loss is within bounds
+    uint256 reversedUnderlying = (stataPrice * 1e27) / liquidityIndex;
+    assertApproxEqAbs(underlyingPrice, reversedUnderlying, 1);
   }
 
   function test_convertersAndPreviews() public view {
