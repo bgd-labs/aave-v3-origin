@@ -221,7 +221,8 @@ interface IStaticATokenLM is IInitializableStaticATokenLM, IERC4626 {
   function setPaused(bool paused) external;
 
   /**
-   * @notice Returns the current asset price of the stataToken, priced by aave-oracle * exchangeRate.
+   * @notice Returns the current asset price of the stataToken.
+   * The price is calculated as `underlying_price * exchangeRate`, but it's important to note that `underlying_price` is the price obtained by the aave-oracle, which means it's subject to caps and similar imposed by the aave DAO on the oracle.
    * @return int256 the current asset price in 8 decimals.
    */
   function latestAnswer() external view returns (int256);
