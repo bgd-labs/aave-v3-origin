@@ -222,8 +222,12 @@ interface IStaticATokenLM is IInitializableStaticATokenLM, IERC4626 {
 
   /**
    * @notice Returns the current asset price of the stataToken.
-   * The price is calculated as `underlying_price * exchangeRate`, but it's important to note that `underlying_price` is the price obtained by the aave-oracle, which means it's subject to caps and similar imposed by the aave DAO on the oracle.
-   * @return price the current asset price priced at in the same manner as the aave oracle prices the underlying.
+   * The price is calculated as `underlying_price * exchangeRate`.
+   * It is important to note that:
+   * - `underlying_price` is the price obtained by the aave-oracle and is subject to it's internal pricing mechanisms.
+   * - as the price is scaled over the excahngeRate, but maintains the same precision as the underlying the price might be underestimated by 1 unit.
+   * - when pricing multiple `shares` as `shares * price` keep in mind that the error compounds.
+   * @return price the current asset price.
    */
   function latestAnswer() external view returns (int256);
 }
