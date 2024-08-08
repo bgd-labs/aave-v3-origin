@@ -79,7 +79,7 @@ contract StaticATokenLM is
   }
 
   function canPause(address actor) public view returns (bool) {
-    return IACLManager(POOL.ADDRESSES_PROVIDER().getACLManager()).isEmergencyAdmin(actor);
+    return IACLManager(POOL_ADDRESSES_PROVIDER.getACLManager()).isEmergencyAdmin(actor);
   }
 
   ///@inheritdoc IInitializableStaticATokenLM
