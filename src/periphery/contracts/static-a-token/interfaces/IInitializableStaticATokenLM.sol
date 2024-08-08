@@ -29,4 +29,10 @@ interface IInitializableStaticATokenLM {
     string calldata staticATokenName,
     string calldata staticATokenSymbol
   ) external;
+
+  /**
+   * @dev Initializes the already initialized StaticATokenLM
+   * @notice This is required Initializable was migrated to EIP-7102 so the storage location moved.
+   */
+  function upgradeInitialize() external;
 }
