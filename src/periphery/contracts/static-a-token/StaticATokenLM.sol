@@ -105,8 +105,10 @@ contract StaticATokenLM is
     emit Initialized(newAToken, staticATokenName, staticATokenSymbol);
   }
 
+  ///@inheritdoc IInitializableStaticATokenLM
   function upgradeInitialize() external initializer {
-      require(__deprecated != 0, 'MUST_ALREADY_BE_INITIALIZED');
+    require(__deprecated != 0, 'MUST_ALREADY_BE_INITIALIZED');
+    __deprecated = 0; // cleanup storage
   }
 
   /// @inheritdoc IRescuable
