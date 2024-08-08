@@ -45,6 +45,7 @@ For this project, the security procedures applied/being finished are:
 - The static a token not implements pausability, which allows the ACL admin to pause all transfers.
 
 The storage layout diff was generated via:
+
 ```
 git checkout main
 forge inspect src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM storage-layout --pretty > reports/StaticATokenStorageBefore.md
