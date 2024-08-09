@@ -2,16 +2,19 @@
 pragma solidity ^0.8.10;
 
 import {IPool} from '../../../core/contracts/interfaces/IPool.sol';
+import {IPoolAddressesProvider} from '../../../core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IAaveOracle} from '../../../core/contracts/interfaces/IAaveOracle.sol';
 import {DataTypes, ReserveConfiguration} from '../../../core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {IRewardsController} from '../rewards/interfaces/IRewardsController.sol';
 import {WadRayMath} from '../../../core/contracts/protocol/libraries/math/WadRayMath.sol';
 import {MathUtils} from '../../../core/contracts/protocol/libraries/math/MathUtils.sol';
+import {IACLManager} from '../../../core/contracts/interfaces/IACLManager.sol';
+import {IRewardsController} from '../rewards/interfaces/IRewardsController.sol';
 import {SafeCast} from 'solidity-utils/contracts/oz-common/SafeCast.sol';
-import {Initializable} from 'solidity-utils/contracts/transparent-proxy/Initializable.sol';
 import {SafeERC20} from 'solidity-utils/contracts/oz-common/SafeERC20.sol';
 import {IERC20Metadata} from 'solidity-utils/contracts/oz-common/interfaces/IERC20Metadata.sol';
 import {IERC20} from 'solidity-utils/contracts/oz-common/interfaces/IERC20.sol';
 import {IERC20WithPermit} from 'solidity-utils/contracts/oz-common/interfaces/IERC20WithPermit.sol';
+import {IRescuable, Rescuable} from 'solidity-utils/contracts/utils/Rescuable.sol';
 
 import {IStaticATokenLM} from './interfaces/IStaticATokenLM.sol';
 import {IAToken} from './interfaces/IAToken.sol';
@@ -20,6 +23,8 @@ import {IInitializableStaticATokenLM} from './interfaces/IInitializableStaticATo
 import {StaticATokenErrors} from './StaticATokenErrors.sol';
 import {RayMathExplicitRounding, Rounding} from '../libraries/RayMathExplicitRounding.sol';
 import {IERC4626} from './interfaces/IERC4626.sol';
+import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol';
+import {DeprecationGap} from './DeprecationGap.sol';
 
 /**
  * @title StaticATokenLM
@@ -29,10 +34,11 @@ import {IERC4626} from './interfaces/IERC4626.sol';
  * @author BGD labs
  */
 contract StaticATokenLM is
-  Initializable,
+  DeprecationGap,
   ERC20('STATIC__aToken_IMPL', 'STATIC__aToken_IMPL', 18),
   IStaticATokenLM,
-  IERC4626
+  Rescuable,
+  PausableUpgradeable
 {
   using SafeERC20 for IERC20;
   using SafeCast for uint256;
@@ -41,16 +47,17 @@ contract StaticATokenLM is
 
   bytes32 public constant METADEPOSIT_TYPEHASH =
     keccak256(
-      'Deposit(address depositor,address receiver,uint256 assets,uint16 referralCode,bool depositToAave,uint256 nonce,uint256 deadline,PermitParams permit)'
+      'Deposit(address depositor,address receiver,uint256 assets,uint16 referralCode,bool depositToAave,uint256 nonce,uint256 deadline)'
     );
   bytes32 public constant METAWITHDRAWAL_TYPEHASH =
     keccak256(
       'Withdraw(address owner,address receiver,uint256 shares,uint256 assets,bool withdrawFromAave,uint256 nonce,uint256 deadline)'
     );
 
-  uint256 public constant STATIC__ATOKEN_LM_REVISION = 2;
+  uint256 public constant STATIC__ATOKEN_LM_REVISION = 3;
 
   IPool public immutable POOL;
+  IPoolAddressesProvider immutable POOL_ADDRESSES_PROVIDER;
   IRewardsController public immutable INCENTIVES_CONTROLLER;
 
   IERC20 internal _aToken;
@@ -60,8 +67,19 @@ contract StaticATokenLM is
   mapping(address => mapping(address => UserRewardsData)) internal _userRewardsData;
 
   constructor(IPool pool, IRewardsController rewardsController) {
+    _disableInitializers();
     POOL = pool;
     INCENTIVES_CONTROLLER = rewardsController;
+    POOL_ADDRESSES_PROVIDER = pool.ADDRESSES_PROVIDER();
+  }
+
+  modifier onlyPauseGuardian() {
+    if (!canPause(msg.sender)) revert OnlyPauseGuardian(msg.sender);
+    _;
+  }
+
+  function canPause(address actor) public view returns (bool) {
+    return IACLManager(POOL_ADDRESSES_PROVIDER.getACLManager()).isEmergencyAdmin(actor);
   }
 
   ///@inheritdoc IInitializableStaticATokenLM
@@ -85,6 +103,17 @@ contract StaticATokenLM is
     }
 
     emit Initialized(newAToken, staticATokenName, staticATokenSymbol);
+  }
+
+  /// @inheritdoc IRescuable
+  function whoCanRescue() public view override returns (address) {
+    return POOL_ADDRESSES_PROVIDER.getACLAdmin();
+  }
+
+  ///@inheritdoc IStaticATokenLM
+  function setPaused(bool paused) external onlyPauseGuardian {
+    if (paused) _pause();
+    else _unpause();
   }
 
   ///@inheritdoc IStaticATokenLM
@@ -143,8 +172,7 @@ contract StaticATokenLM is
               referralCode,
               depositToAave,
               nonce,
-              deadline,
-              permit
+              deadline
             )
           )
         )
@@ -444,6 +472,15 @@ contract StaticATokenLM is
     return _withdraw(owner, receiver, shares, 0, withdrawFromAave);
   }
 
+  ///@inheritdoc IStaticATokenLM
+  function latestAnswer() external view returns (int256) {
+    return
+      int256(
+        (IAaveOracle(POOL_ADDRESSES_PROVIDER.getPriceOracle()).getAssetPrice(_aTokenUnderlying) *
+          POOL.getReserveNormalizedIncome(_aTokenUnderlying)) / 1e27
+      );
+  }
+
   function _deposit(
     address depositor,
     address receiver,
@@ -535,7 +572,7 @@ contract StaticATokenLM is
    * @param from The address of the sender of tokens
    * @param to The address of the receiver of tokens
    */
-  function _beforeTokenTransfer(address from, address to, uint256) internal override {
+  function _beforeTokenTransfer(address from, address to, uint256) internal override whenNotPaused {
     for (uint256 i = 0; i < _rewardTokens.length; i++) {
       address rewardToken = address(_rewardTokens[i]);
       uint256 rewardsIndex = getCurrentRewardsIndex(rewardToken);
@@ -628,7 +665,7 @@ contract StaticATokenLM is
     address onBehalfOf,
     address receiver,
     address[] memory rewards
-  ) internal {
+  ) internal whenNotPaused {
     for (uint256 i = 0; i < rewards.length; i++) {
       if (address(rewards[i]) == address(0)) {
         continue;

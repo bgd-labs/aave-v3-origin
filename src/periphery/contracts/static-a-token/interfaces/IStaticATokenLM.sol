@@ -2,9 +2,10 @@
 pragma solidity ^0.8.10;
 
 import {IERC20} from 'solidity-utils/contracts/oz-common/interfaces/IERC20.sol';
+import {IERC4626} from './IERC4626.sol';
 import {IInitializableStaticATokenLM} from './IInitializableStaticATokenLM.sol';
 
-interface IStaticATokenLM is IInitializableStaticATokenLM {
+interface IStaticATokenLM is IInitializableStaticATokenLM, IERC4626 {
   struct SignatureParams {
     uint8 v;
     bytes32 r;
@@ -12,8 +13,6 @@ interface IStaticATokenLM is IInitializableStaticATokenLM {
   }
 
   struct PermitParams {
-    address owner;
-    address spender;
     uint256 value;
     uint256 deadline;
     uint8 v;
@@ -30,6 +29,8 @@ interface IStaticATokenLM is IInitializableStaticATokenLM {
     bool isRegistered;
     uint248 lastUpdatedIndex;
   }
+
+  error OnlyPauseGuardian(address caller);
 
   event RewardTokenRegistered(address indexed reward, uint256 startIndex);
 
@@ -208,7 +209,25 @@ interface IStaticATokenLM is IInitializableStaticATokenLM {
 
   /**
    * @notice Checks if the passed token is a registered reward.
+   * @param reward The reward to claim
    * @return bool signaling if token is a registered reward.
    */
   function isRegisteredRewardToken(address reward) external view returns (bool);
+
+  /**
+   * @notice Pauses/unpauses all system's operations
+   * @param paused boolean determining if the token should be paused or unpaused
+   */
+  function setPaused(bool paused) external;
+
+  /**
+   * @notice Returns the current asset price of the stataToken.
+   * The price is calculated as `underlying_price * exchangeRate`.
+   * It is important to note that:
+   * - `underlying_price` is the price obtained by the aave-oracle and is subject to it's internal pricing mechanisms.
+   * - as the price is scaled over the exchangeRate, but maintains the same precision as the underlying the price might be underestimated by 1 unit.
+   * - when pricing multiple `shares` as `shares * price` keep in mind that the error compounds.
+   * @return price the current asset price.
+   */
+  function latestAnswer() external view returns (int256);
 }

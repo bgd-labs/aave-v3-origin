@@ -1,22 +1,19 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
+import {IRescuable} from 'solidity-utils/contracts/utils/Rescuable.sol';
+import {Initializable} from 'openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol';
 import {AToken} from '../../../src/core/contracts/protocol/tokenization/AToken.sol';
 import {DataTypes} from '../../../src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {IERC20, IERC20Metadata} from '../../../src/periphery/contracts/static-a-token/StaticATokenLM.sol';
 import {RayMathExplicitRounding} from '../../../src/periphery/contracts/libraries/RayMathExplicitRounding.sol';
-import {PullRewardsTransferStrategy} from '../../../src/periphery/contracts/rewards/transfer-strategies/PullRewardsTransferStrategy.sol';
-import {RewardsDataTypes} from '../../../src/periphery/contracts/rewards/libraries/RewardsDataTypes.sol';
-import {ITransferStrategyBase} from '../../../src/periphery/contracts/rewards/interfaces/ITransferStrategyBase.sol';
-import {IEACAggregatorProxy} from '../../../src/periphery/contracts/misc/interfaces/IEACAggregatorProxy.sol';
 import {IStaticATokenLM} from '../../../src/periphery/contracts/static-a-token/interfaces/IStaticATokenLM.sol';
 import {SigUtils} from '../../utils/SigUtils.sol';
 import {BaseTest, TestnetERC20} from './TestBase.sol';
+import {IPool} from '../../../src/core/contracts/interfaces/IPool.sol';
 
 contract StaticATokenLMTest is BaseTest {
   using RayMathExplicitRounding for uint256;
-
-  address public constant EMISSION_ADMIN = address(25);
 
   function setUp() public override {
     super.setUp();
@@ -29,8 +26,8 @@ contract StaticATokenLMTest is BaseTest {
 
   function test_initializeShouldRevert() public {
     address impl = factory.STATIC_A_TOKEN_IMPL();
-    vm.expectRevert();
-    IStaticATokenLM(impl).initialize(0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8, 'hey', 'ho');
+    vm.expectRevert(Initializable.InvalidInitialization.selector);
+    IStaticATokenLM(impl).initialize(A_TOKEN, 'hey', 'ho');
   }
 
   function test_getters() public view {
@@ -50,6 +47,34 @@ contract StaticATokenLMTest is BaseTest {
       address(staticATokenLM.INCENTIVES_CONTROLLER()),
       address(AToken(A_TOKEN).getIncentivesController())
     );
+  }
+
+  function test_latestAnswer_priceShouldBeEqualOnDefaultIndex() public {
+    vm.mockCall(
+      address(POOL),
+      abi.encodeWithSelector(IPool.getReserveNormalizedIncome.selector),
+      abi.encode(1e27)
+    );
+    uint256 stataPrice = uint256(staticATokenLM.latestAnswer());
+    uint256 underlyingPrice = contracts.aaveOracle.getAssetPrice(UNDERLYING);
+    assertEq(stataPrice, underlyingPrice);
+  }
+
+  function test_latestAnswer_priceShouldReflectIndexAccrual(uint256 liquidityIndex) public {
+    liquidityIndex = bound(liquidityIndex, 1e27, 1e29);
+    vm.mockCall(
+      address(POOL),
+      abi.encodeWithSelector(IPool.getReserveNormalizedIncome.selector),
+      abi.encode(liquidityIndex)
+    );
+    uint256 stataPrice = uint256(staticATokenLM.latestAnswer());
+    uint256 underlyingPrice = contracts.aaveOracle.getAssetPrice(UNDERLYING);
+    uint256 expectedStataPrice = (underlyingPrice * liquidityIndex) / 1e27;
+    assertEq(stataPrice, expectedStataPrice);
+
+    // reverse the math to ensure precision loss is within bounds
+    uint256 reversedUnderlying = (stataPrice * 1e27) / liquidityIndex;
+    assertApproxEqAbs(underlyingPrice, reversedUnderlying, 1);
   }
 
   function test_convertersAndPreviews() public view {
@@ -181,136 +206,6 @@ contract StaticATokenLMTest is BaseTest {
     _underlyingToAToken(amountToDeposit, user);
     IERC20(A_TOKEN).approve(address(staticATokenLM), amountToDeposit);
     staticATokenLM.mint(amountToDeposit, user);
-  }
-
-  // test rewards
-  function test_collectAndUpdateRewards() public {
-    uint128 amountToDeposit = 5 ether;
-    _fundUser(amountToDeposit, user);
-
-    _depositAToken(amountToDeposit, user);
-
-    _skipBlocks(60);
-    assertEq(IERC20(REWARD_TOKEN).balanceOf(address(staticATokenLM)), 0);
-    uint256 claimable = staticATokenLM.getTotalClaimableRewards(REWARD_TOKEN);
-    staticATokenLM.collectAndUpdateRewards(REWARD_TOKEN);
-    assertEq(IERC20(REWARD_TOKEN).balanceOf(address(staticATokenLM)), claimable);
-  }
-
-  function test_claimRewardsToSelf() public {
-    uint128 amountToDeposit = 5 ether;
-    _fundUser(amountToDeposit, user);
-
-    _depositAToken(amountToDeposit, user);
-
-    _skipBlocks(60);
-
-    uint256 claimable = staticATokenLM.getClaimableRewards(user, REWARD_TOKEN);
-    staticATokenLM.claimRewardsToSelf(rewardTokens);
-    assertEq(IERC20(REWARD_TOKEN).balanceOf(user), claimable);
-    assertEq(staticATokenLM.getClaimableRewards(user, REWARD_TOKEN), 0);
-  }
-
-  function test_claimRewards() public {
-    uint128 amountToDeposit = 5 ether;
-    _fundUser(amountToDeposit, user);
-
-    _depositAToken(amountToDeposit, user);
-
-    _skipBlocks(60);
-
-    uint256 claimable = staticATokenLM.getClaimableRewards(user, REWARD_TOKEN);
-    staticATokenLM.claimRewards(user, rewardTokens);
-    assertEq(claimable, IERC20(REWARD_TOKEN).balanceOf(user));
-    assertEq(IERC20(REWARD_TOKEN).balanceOf(address(staticATokenLM)), 0);
-    assertEq(staticATokenLM.getClaimableRewards(user, REWARD_TOKEN), 0);
-  }
-
-  // should fail as user1 is not a valid claimer
-  function testFail_claimRewardsOnBehalfOf() public {
-    uint128 amountToDeposit = 5 ether;
-    _fundUser(amountToDeposit, user);
-
-    _depositAToken(amountToDeposit, user);
-
-    _skipBlocks(60);
-
-    vm.stopPrank();
-    vm.startPrank(user1);
-
-    staticATokenLM.getClaimableRewards(user, REWARD_TOKEN);
-    staticATokenLM.claimRewardsOnBehalf(user, user1, rewardTokens);
-  }
-
-  function test_depositATokenClaimWithdrawClaim() public {
-    uint128 amountToDeposit = 5 ether;
-    _fundUser(amountToDeposit, user);
-
-    // deposit aweth
-    _depositAToken(amountToDeposit, user);
-
-    // forward time
-    _skipBlocks(60);
-
-    // claim
-    assertEq(IERC20(REWARD_TOKEN).balanceOf(user), 0);
-    uint256 claimable0 = staticATokenLM.getClaimableRewards(user, REWARD_TOKEN);
-    assertEq(staticATokenLM.getTotalClaimableRewards(REWARD_TOKEN), claimable0);
-    assertGt(claimable0, 0);
-    staticATokenLM.claimRewardsToSelf(rewardTokens);
-    assertEq(IERC20(REWARD_TOKEN).balanceOf(user), claimable0);
-
-    // forward time
-    _skipBlocks(60);
-
-    // redeem
-    staticATokenLM.redeem(staticATokenLM.maxRedeem(user), user, user);
-    uint256 claimable1 = staticATokenLM.getClaimableRewards(user, REWARD_TOKEN);
-    assertEq(staticATokenLM.getTotalClaimableRewards(REWARD_TOKEN), claimable1);
-    assertGt(claimable1, 0);
-
-    // claim on behalf of other user
-    staticATokenLM.claimRewardsToSelf(rewardTokens);
-    assertEq(IERC20(REWARD_TOKEN).balanceOf(user), claimable1 + claimable0);
-    assertEq(staticATokenLM.balanceOf(user), 0);
-    assertEq(staticATokenLM.getClaimableRewards(user, REWARD_TOKEN), 0);
-    assertEq(staticATokenLM.getTotalClaimableRewards(REWARD_TOKEN), 0);
-    assertGt(AToken(UNDERLYING).balanceOf(user), 5 ether);
-  }
-
-  function test_depositWETHClaimWithdrawClaim() public {
-    uint128 amountToDeposit = 5 ether;
-    _fundUser(amountToDeposit, user);
-
-    _depositAToken(amountToDeposit, user);
-
-    // forward time
-    _skipBlocks(60);
-
-    // claim
-    assertEq(IERC20(REWARD_TOKEN).balanceOf(user), 0);
-    uint256 claimable0 = staticATokenLM.getClaimableRewards(user, REWARD_TOKEN);
-    assertEq(staticATokenLM.getTotalClaimableRewards(REWARD_TOKEN), claimable0);
-    assertGt(claimable0, 0);
-    staticATokenLM.claimRewardsToSelf(rewardTokens);
-    assertEq(IERC20(REWARD_TOKEN).balanceOf(user), claimable0);
-
-    // forward time
-    _skipBlocks(60);
-
-    // redeem
-    staticATokenLM.redeem(staticATokenLM.maxRedeem(user), user, user);
-    uint256 claimable1 = staticATokenLM.getClaimableRewards(user, REWARD_TOKEN);
-    assertEq(staticATokenLM.getTotalClaimableRewards(REWARD_TOKEN), claimable1);
-    assertGt(claimable1, 0);
-
-    // claim on behalf of other user
-    staticATokenLM.claimRewardsToSelf(rewardTokens);
-    assertEq(IERC20(REWARD_TOKEN).balanceOf(user), claimable1 + claimable0);
-    assertEq(staticATokenLM.balanceOf(user), 0);
-    assertEq(staticATokenLM.getClaimableRewards(user, REWARD_TOKEN), 0);
-    assertEq(staticATokenLM.getTotalClaimableRewards(REWARD_TOKEN), 0);
-    assertGt(AToken(UNDERLYING).balanceOf(user), 5 ether);
   }
 
   function test_transfer() public {
@@ -556,42 +451,24 @@ contract StaticATokenLMTest is BaseTest {
     staticATokenLM.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
   }
 
-  function _configureLM() internal {
-    PullRewardsTransferStrategy strat = new PullRewardsTransferStrategy(
-      report.rewardsControllerProxy,
-      EMISSION_ADMIN,
-      EMISSION_ADMIN
+  function test_rescuable_shouldRevertForInvalidCaller() external {
+    deal(tokenList.usdx, address(staticATokenLM), 1 ether);
+    vm.expectRevert('ONLY_RESCUE_GUARDIAN');
+    IRescuable(address(staticATokenLM)).emergencyTokenTransfer(
+      tokenList.usdx,
+      address(this),
+      1 ether
     );
+  }
 
+  function test_rescuable_shouldSuceedForOwner() external {
+    deal(tokenList.usdx, address(staticATokenLM), 1 ether);
     vm.startPrank(poolAdmin);
-    contracts.emissionManager.setEmissionAdmin(REWARD_TOKEN, EMISSION_ADMIN);
-    vm.stopPrank();
-
-    vm.startPrank(EMISSION_ADMIN);
-    IERC20(REWARD_TOKEN).approve(address(strat), 10_000 ether);
-    vm.stopPrank();
-
-    vm.startPrank(OWNER);
-    TestnetERC20(REWARD_TOKEN).mint(EMISSION_ADMIN, 10_000 ether);
-    vm.stopPrank();
-
-    RewardsDataTypes.RewardsConfigInput[] memory config = new RewardsDataTypes.RewardsConfigInput[](
-      1
+    IRescuable(address(staticATokenLM)).emergencyTokenTransfer(
+      tokenList.usdx,
+      address(this),
+      1 ether
     );
-    config[0] = RewardsDataTypes.RewardsConfigInput(
-      0.00385 ether,
-      10_000 ether,
-      uint32(block.timestamp + 30 days),
-      A_TOKEN,
-      REWARD_TOKEN,
-      ITransferStrategyBase(strat),
-      IEACAggregatorProxy(address(2))
-    );
-
-    vm.prank(EMISSION_ADMIN);
-    contracts.emissionManager.configureAssets(config);
-
-    staticATokenLM.refreshRewardTokens();
   }
 
   function _openSupplyAndBorrowPositions() internal {
