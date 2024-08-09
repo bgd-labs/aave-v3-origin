@@ -10,7 +10,7 @@ contract StataOracleTest is BaseTest {
 
   function setUp() public override {
     super.setUp();
-    oracle = new StataOracle(contracts.poolAddressesProvider);
+    oracle = new StataOracle();
 
     vm.prank(address(roleList.marketOwner));
     contracts.poolConfiguratorProxy.setSupplyCap(UNDERLYING, 1_000_000);
