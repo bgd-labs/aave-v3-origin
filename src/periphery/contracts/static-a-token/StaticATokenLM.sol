@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
+import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol';
+import {ERC20Upgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol';
+import {ERC20PermitUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PermitUpgradeable.sol';
+import {ERC20PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PausableUpgradeable.sol';
+import {ERC4626Upgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC4626Upgradeable.sol';
+import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
+
 import {IPool} from '../../../core/contracts/interfaces/IPool.sol';
 import {IPoolAddressesProvider} from '../../../core/contracts/interfaces/IPoolAddressesProvider.sol';
 import {IAaveOracle} from '../../../core/contracts/interfaces/IAaveOracle.sol';
@@ -18,13 +25,9 @@ import {IRescuable, Rescuable} from 'solidity-utils/contracts/utils/Rescuable.so
 
 import {IStaticATokenLM} from './interfaces/IStaticATokenLM.sol';
 import {IAToken} from './interfaces/IAToken.sol';
-import {ERC20} from '../dependencies/solmate/ERC20.sol';
 import {IInitializableStaticATokenLM} from './interfaces/IInitializableStaticATokenLM.sol';
 import {StaticATokenErrors} from './StaticATokenErrors.sol';
 import {RayMathExplicitRounding, Rounding} from '../libraries/RayMathExplicitRounding.sol';
-import {IERC4626} from './interfaces/IERC4626.sol';
-import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol';
-import {DeprecationGap} from './DeprecationGap.sol';
 
 /**
  * @title StaticATokenLM
@@ -34,11 +37,12 @@ import {DeprecationGap} from './DeprecationGap.sol';
  * @author BGD labs
  */
 contract StaticATokenLM is
-  DeprecationGap,
-  ERC20('STATIC__aToken_IMPL', 'STATIC__aToken_IMPL', 18),
+  ERC20Upgradeable,
+  ERC20PermitUpgradeable,
+  ERC20PausableUpgradeable,
+  ERC4626Upgradeable,
   IStaticATokenLM,
-  Rescuable,
-  PausableUpgradeable
+  Rescuable
 {
   using SafeERC20 for IERC20;
   using SafeCast for uint256;
@@ -62,6 +66,7 @@ contract StaticATokenLM is
 
   IERC20 internal _aToken;
   address internal _aTokenUnderlying;
+  uint8 internal _decimals;
   address[] internal _rewardTokens;
   mapping(address => RewardIndexCache) internal _startIndex;
   mapping(address => mapping(address => UserRewardsData)) internal _userRewardsData;
@@ -89,11 +94,10 @@ contract StaticATokenLM is
     string calldata staticATokenSymbol
   ) external initializer {
     require(IAToken(newAToken).POOL() == address(POOL));
+    __ERC20_init(staticATokenName, staticATokenSymbol);
+    __ERC20Permit_init(staticATokenName);
     _aToken = IERC20(newAToken);
-
-    name = staticATokenName;
-    symbol = staticATokenSymbol;
-    decimals = IERC20Metadata(newAToken).decimals();
+    _decimals = IERC20Metadata(address(_aToken)).decimals();
 
     _aTokenUnderlying = IAToken(newAToken).UNDERLYING_ASSET_ADDRESS();
     IERC20(_aTokenUnderlying).forceApprove(address(POOL), type(uint256).max);
@@ -103,6 +107,10 @@ contract StaticATokenLM is
     }
 
     emit Initialized(newAToken, staticATokenName, staticATokenSymbol);
+  }
+
+  function decimals() public view override(ERC20Upgradeable, ERC4626Upgradeable) returns (uint8) {
+    return _decimals;
   }
 
   /// @inheritdoc IRescuable
@@ -140,130 +148,105 @@ contract StaticATokenLM is
     return shares;
   }
 
-  ///@inheritdoc IStaticATokenLM
-  function metaDeposit(
-    address depositor,
-    address receiver,
-    uint256 assets,
-    uint16 referralCode,
-    bool depositToAave,
-    uint256 deadline,
-    PermitParams calldata permit,
-    SignatureParams calldata sigParams
-  ) external returns (uint256) {
-    require(depositor != address(0), StaticATokenErrors.INVALID_DEPOSITOR);
-    //solium-disable-next-line
-    require(deadline >= block.timestamp, StaticATokenErrors.INVALID_EXPIRATION);
-    uint256 nonce = nonces[depositor];
+  // ///@inheritdoc IStaticATokenLM
+  // function metaDeposit(
+  //   address depositor,
+  //   address receiver,
+  //   uint256 assets,
+  //   uint16 referralCode,
+  //   bool depositToAave,
+  //   uint256 deadline,
+  //   PermitParams calldata permit,
+  //   SignatureParams calldata sigParams
+  // ) external returns (uint256) {
+  //   require(depositor != address(0), StaticATokenErrors.INVALID_DEPOSITOR);
+  //   //solium-disable-next-line
+  //   require(deadline >= block.timestamp, StaticATokenErrors.INVALID_EXPIRATION);
+  //   // Unchecked because the only math done is incrementing
+  //   // the owner's nonce which cannot realistically overflow.
+  //   unchecked {
+  //     bytes32 digest = keccak256(
+  //       abi.encodePacked(
+  //         '\x19\x01',
+  //         _domainSeparatorV4(),
+  //         keccak256(
+  //           abi.encode(
+  //             METADEPOSIT_TYPEHASH,
+  //             depositor,
+  //             receiver,
+  //             assets,
+  //             referralCode,
+  //             depositToAave,
+  //             _useNonce(depositor),
+  //             deadline
+  //           )
+  //         )
+  //       )
+  //     );
+  //     require(
+  //       depositor == ecrecover(digest, sigParams.v, sigParams.r, sigParams.s),
+  //       StaticATokenErrors.INVALID_SIGNATURE
+  //     );
+  //   }
+  //   // assume if deadline 0 no permit was supplied
+  //   if (permit.deadline != 0) {
+  //     try
+  //       IERC20WithPermit(depositToAave ? address(_aTokenUnderlying) : address(_aToken)).permit(
+  //         depositor,
+  //         address(this),
+  //         permit.value,
+  //         permit.deadline,
+  //         permit.v,
+  //         permit.r,
+  //         permit.s
+  //       )
+  //     {} catch {}
+  //   }
+  //   (uint256 shares, ) = _deposit(depositor, receiver, 0, assets, referralCode, depositToAave);
+  //   return shares;
+  // }
 
-    // Unchecked because the only math done is incrementing
-    // the owner's nonce which cannot realistically overflow.
-    unchecked {
-      bytes32 digest = keccak256(
-        abi.encodePacked(
-          '\x19\x01',
-          DOMAIN_SEPARATOR(),
-          keccak256(
-            abi.encode(
-              METADEPOSIT_TYPEHASH,
-              depositor,
-              receiver,
-              assets,
-              referralCode,
-              depositToAave,
-              nonce,
-              deadline
-            )
-          )
-        )
-      );
-      nonces[depositor] = nonce + 1;
-      require(
-        depositor == ecrecover(digest, sigParams.v, sigParams.r, sigParams.s),
-        StaticATokenErrors.INVALID_SIGNATURE
-      );
-    }
-    // assume if deadline 0 no permit was supplied
-    if (permit.deadline != 0) {
-      try
-        IERC20WithPermit(depositToAave ? address(_aTokenUnderlying) : address(_aToken)).permit(
-          depositor,
-          address(this),
-          permit.value,
-          permit.deadline,
-          permit.v,
-          permit.r,
-          permit.s
-        )
-      {} catch {}
-    }
-    (uint256 shares, ) = _deposit(depositor, receiver, 0, assets, referralCode, depositToAave);
-    return shares;
-  }
-
-  ///@inheritdoc IStaticATokenLM
-  function metaWithdraw(
-    address owner,
-    address receiver,
-    uint256 shares,
-    uint256 assets,
-    bool withdrawFromAave,
-    uint256 deadline,
-    SignatureParams calldata sigParams
-  ) external returns (uint256, uint256) {
-    require(owner != address(0), StaticATokenErrors.INVALID_OWNER);
-    //solium-disable-next-line
-    require(deadline >= block.timestamp, StaticATokenErrors.INVALID_EXPIRATION);
-    uint256 nonce = nonces[owner];
-    // Unchecked because the only math done is incrementing
-    // the owner's nonce which cannot realistically overflow.
-    unchecked {
-      bytes32 digest = keccak256(
-        abi.encodePacked(
-          '\x19\x01',
-          DOMAIN_SEPARATOR(),
-          keccak256(
-            abi.encode(
-              METAWITHDRAWAL_TYPEHASH,
-              owner,
-              receiver,
-              shares,
-              assets,
-              withdrawFromAave,
-              nonce,
-              deadline
-            )
-          )
-        )
-      );
-      nonces[owner] = nonce + 1;
-      require(
-        owner == ecrecover(digest, sigParams.v, sigParams.r, sigParams.s),
-        StaticATokenErrors.INVALID_SIGNATURE
-      );
-    }
-    return _withdraw(owner, receiver, shares, assets, withdrawFromAave);
-  }
-
-  ///@inheritdoc IERC4626
-  function previewRedeem(uint256 shares) public view virtual returns (uint256) {
-    return _convertToAssets(shares, Rounding.DOWN);
-  }
-
-  ///@inheritdoc IERC4626
-  function previewMint(uint256 shares) public view virtual returns (uint256) {
-    return _convertToAssets(shares, Rounding.UP);
-  }
-
-  ///@inheritdoc IERC4626
-  function previewWithdraw(uint256 assets) public view virtual returns (uint256) {
-    return _convertToShares(assets, Rounding.UP);
-  }
-
-  ///@inheritdoc IERC4626
-  function previewDeposit(uint256 assets) public view virtual returns (uint256) {
-    return _convertToShares(assets, Rounding.DOWN);
-  }
+  // ///@inheritdoc IStaticATokenLM
+  // function metaWithdraw(
+  //   address owner,
+  //   address receiver,
+  //   uint256 shares,
+  //   uint256 assets,
+  //   bool withdrawFromAave,
+  //   uint256 deadline,
+  //   SignatureParams calldata sigParams
+  // ) external returns (uint256, uint256) {
+  //   require(owner != address(0), StaticATokenErrors.INVALID_OWNER);
+  //   //solium-disable-next-line
+  //   require(deadline >= block.timestamp, StaticATokenErrors.INVALID_EXPIRATION);
+  //   // Unchecked because the only math done is incrementing
+  //   // the owner's nonce which cannot realistically overflow.
+  //   unchecked {
+  //     bytes32 digest = keccak256(
+  //       abi.encodePacked(
+  //         '\x19\x01',
+  //         _domainSeparatorV4(),
+  //         keccak256(
+  //           abi.encode(
+  //             METAWITHDRAWAL_TYPEHASH,
+  //             owner,
+  //             receiver,
+  //             shares,
+  //             assets,
+  //             withdrawFromAave,
+  //             _useNonce(owner),
+  //             deadline
+  //           )
+  //         )
+  //       )
+  //     );
+  //     require(
+  //       owner == ecrecover(digest, sigParams.v, sigParams.r, sigParams.s),
+  //       StaticATokenErrors.INVALID_SIGNATURE
+  //     );
+  //   }
+  //   return _withdraw(owner, receiver, shares, assets, withdrawFromAave);
+  // }
 
   ///@inheritdoc IStaticATokenLM
   function rate() public view returns (uint256) {
@@ -328,7 +311,7 @@ contract StaticATokenLM is
 
   ///@inheritdoc IStaticATokenLM
   function getClaimableRewards(address user, address reward) external view returns (uint256) {
-    return _getClaimableRewards(user, reward, balanceOf[user], getCurrentRewardsIndex(reward));
+    return _getClaimableRewards(user, reward, balanceOf(user), getCurrentRewardsIndex(reward));
   }
 
   ///@inheritdoc IStaticATokenLM
@@ -337,7 +320,7 @@ contract StaticATokenLM is
   }
 
   ///@inheritdoc IERC4626
-  function asset() external view returns (address) {
+  function asset() public view override returns (address) {
     return address(_aTokenUnderlying);
   }
 
@@ -352,35 +335,35 @@ contract StaticATokenLM is
   }
 
   ///@inheritdoc IERC4626
-  function totalAssets() external view returns (uint256) {
+  function totalAssets() public view override returns (uint256) {
     return _aToken.balanceOf(address(this));
   }
 
   ///@inheritdoc IERC4626
-  function convertToShares(uint256 assets) external view returns (uint256) {
+  function convertToShares(uint256 assets) public view override returns (uint256) {
     return _convertToShares(assets, Rounding.DOWN);
   }
 
   ///@inheritdoc IERC4626
-  function convertToAssets(uint256 shares) external view returns (uint256) {
+  function convertToAssets(uint256 shares) public view override returns (uint256) {
     return _convertToAssets(shares, Rounding.DOWN);
   }
 
   ///@inheritdoc IERC4626
-  function maxMint(address) public view virtual returns (uint256) {
+  function maxMint(address) public view override returns (uint256) {
     uint256 assets = maxDeposit(address(0));
     if (assets == type(uint256).max) return type(uint256).max;
     return _convertToShares(assets, Rounding.DOWN);
   }
 
   ///@inheritdoc IERC4626
-  function maxWithdraw(address owner) public view virtual returns (uint256) {
+  function maxWithdraw(address owner) public view override returns (uint256) {
     uint256 shares = maxRedeem(owner);
     return _convertToAssets(shares, Rounding.DOWN);
   }
 
   ///@inheritdoc IERC4626
-  function maxRedeem(address owner) public view virtual returns (uint256) {
+  function maxRedeem(address owner) public view override returns (uint256) {
     address cachedATokenUnderlying = _aTokenUnderlying;
     DataTypes.ReserveDataLegacy memory reserveData = POOL.getReserveData(cachedATokenUnderlying);
 
@@ -397,7 +380,7 @@ contract StaticATokenLM is
       IERC20(cachedATokenUnderlying).balanceOf(reserveData.aTokenAddress),
       Rounding.DOWN
     );
-    uint256 cachedUserBalance = balanceOf[owner];
+    uint256 cachedUserBalance = balanceOf(owner);
     return
       underlyingTokenBalanceInShares >= cachedUserBalance
         ? cachedUserBalance
@@ -405,7 +388,7 @@ contract StaticATokenLM is
   }
 
   ///@inheritdoc IERC4626
-  function maxDeposit(address) public view virtual returns (uint256) {
+  function maxDeposit(address) public view override returns (uint256) {
     DataTypes.ReserveDataLegacy memory reserveData = POOL.getReserveData(_aTokenUnderlying);
 
     // if inactive, paused or frozen users cannot deposit underlying
@@ -428,13 +411,13 @@ contract StaticATokenLM is
   }
 
   ///@inheritdoc IERC4626
-  function deposit(uint256 assets, address receiver) external virtual returns (uint256) {
+  function deposit(uint256 assets, address receiver) public override returns (uint256) {
     (uint256 shares, ) = _deposit(msg.sender, receiver, 0, assets, 0, true);
     return shares;
   }
 
   ///@inheritdoc IERC4626
-  function mint(uint256 shares, address receiver) external virtual returns (uint256) {
+  function mint(uint256 shares, address receiver) public override returns (uint256) {
     (, uint256 assets) = _deposit(msg.sender, receiver, shares, 0, 0, true);
 
     return assets;
@@ -445,7 +428,7 @@ contract StaticATokenLM is
     uint256 assets,
     address receiver,
     address owner
-  ) external virtual returns (uint256) {
+  ) public override returns (uint256) {
     (uint256 shares, ) = _withdraw(owner, receiver, 0, assets, true);
 
     return shares;
@@ -456,7 +439,7 @@ contract StaticATokenLM is
     uint256 shares,
     address receiver,
     address owner
-  ) external virtual returns (uint256) {
+  ) public override returns (uint256) {
     (, uint256 assets) = _withdraw(owner, receiver, shares, 0, true);
 
     return assets;
@@ -468,7 +451,7 @@ contract StaticATokenLM is
     address receiver,
     address owner,
     bool withdrawFromAave
-  ) external virtual returns (uint256, uint256) {
+  ) external returns (uint256, uint256) {
     return _withdraw(owner, receiver, shares, 0, withdrawFromAave);
   }
 
@@ -549,9 +532,7 @@ contract StaticATokenLM is
     }
 
     if (msg.sender != owner) {
-      uint256 allowed = allowance[owner][msg.sender]; // Saves gas for limited approvals.
-
-      if (allowed != type(uint256).max) allowance[owner][msg.sender] = allowed - shares;
+      _spendAllowance(owner, msg.sender, shares);
     }
 
     _burn(owner, shares);
@@ -572,7 +553,11 @@ contract StaticATokenLM is
    * @param from The address of the sender of tokens
    * @param to The address of the receiver of tokens
    */
-  function _beforeTokenTransfer(address from, address to, uint256) internal override whenNotPaused {
+  function _update(
+    address from,
+    address to,
+    uint256 amount
+  ) internal override(ERC20Upgradeable, ERC20PausableUpgradeable) whenNotPaused {
     for (uint256 i = 0; i < _rewardTokens.length; i++) {
       address rewardToken = address(_rewardTokens[i]);
       uint256 rewardsIndex = getCurrentRewardsIndex(rewardToken);
@@ -583,6 +568,7 @@ contract StaticATokenLM is
         _updateUser(to, rewardsIndex, rewardToken);
       }
     }
+    super._update(from, to, amount);
   }
 
   /**
@@ -592,7 +578,7 @@ contract StaticATokenLM is
    * @param rewardToken The address of the reward token
    */
   function _updateUser(address user, uint256 currentRewardsIndex, address rewardToken) internal {
-    uint256 balance = balanceOf[user];
+    uint256 balance = balanceOf(user);
     if (balance > 0) {
       _userRewardsData[user][rewardToken].unclaimedRewards = _getClaimableRewards(
         user,
@@ -610,19 +596,17 @@ contract StaticATokenLM is
    * @param balance The balance of the user
    * @param rewardsIndexOnLastInteraction The index which was on the last interaction of the user
    * @param currentRewardsIndex The current rewards index in the system
-   * @param assetUnit One unit of asset (10**decimals)
    * @return The amount of pending rewards in WAD
    */
   function _getPendingRewards(
     uint256 balance,
     uint256 rewardsIndexOnLastInteraction,
-    uint256 currentRewardsIndex,
-    uint256 assetUnit
-  ) internal pure returns (uint256) {
+    uint256 currentRewardsIndex
+  ) internal view returns (uint256) {
     if (balance == 0) {
       return 0;
     }
-    return (balance * (currentRewardsIndex - rewardsIndexOnLastInteraction)) / assetUnit;
+    return (balance * (currentRewardsIndex - rewardsIndexOnLastInteraction)) / 10 ** decimals();
   }
 
   /**
@@ -642,7 +626,6 @@ contract StaticATokenLM is
     RewardIndexCache memory rewardsIndexCache = _startIndex[reward];
     require(rewardsIndexCache.isRegistered == true, StaticATokenErrors.REWARD_NOT_INITIALIZED);
     UserRewardsData memory currentUserRewardsData = _userRewardsData[user][reward];
-    uint256 assetUnit = 10 ** decimals;
     return
       currentUserRewardsData.unclaimedRewards +
       _getPendingRewards(
@@ -650,8 +633,7 @@ contract StaticATokenLM is
         currentUserRewardsData.rewardsIndexOnLastInteraction == 0
           ? rewardsIndexCache.lastUpdatedIndex
           : currentUserRewardsData.rewardsIndexOnLastInteraction,
-        currentRewardsIndex,
-        assetUnit
+        currentRewardsIndex
       );
   }
 
@@ -671,7 +653,7 @@ contract StaticATokenLM is
         continue;
       }
       uint256 currentRewardsIndex = getCurrentRewardsIndex(rewards[i]);
-      uint256 balance = balanceOf[onBehalfOf];
+      uint256 balance = balanceOf(onBehalfOf);
       uint256 userReward = _getClaimableRewards(
         onBehalfOf,
         rewards[i],
