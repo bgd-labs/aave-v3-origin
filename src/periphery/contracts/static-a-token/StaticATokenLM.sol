@@ -6,7 +6,7 @@ import {ERC20Upgradeable} from 'openzeppelin-contracts-upgradeable/contracts/tok
 import {ERC20PermitUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PermitUpgradeable.sol';
 import {ERC20PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PausableUpgradeable.sol';
 import {ERC4626Upgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC4626Upgradeable.sol';
-import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
+import {IERC4626} from '@openzeppelin/contracts/interfaces/IERC4626.sol';
 
 import {IPool} from '../../../core/contracts/interfaces/IPool.sol';
 import {IPoolAddressesProvider} from '../../../core/contracts/interfaces/IPoolAddressesProvider.sol';
@@ -48,15 +48,6 @@ contract StaticATokenLM is
   using SafeCast for uint256;
   using WadRayMath for uint256;
   using RayMathExplicitRounding for uint256;
-
-  bytes32 public constant METADEPOSIT_TYPEHASH =
-    keccak256(
-      'Deposit(address depositor,address receiver,uint256 assets,uint16 referralCode,bool depositToAave,uint256 nonce,uint256 deadline)'
-    );
-  bytes32 public constant METAWITHDRAWAL_TYPEHASH =
-    keccak256(
-      'Withdraw(address owner,address receiver,uint256 shares,uint256 assets,bool withdrawFromAave,uint256 nonce,uint256 deadline)'
-    );
 
   uint256 public constant STATIC__ATOKEN_LM_REVISION = 3;
 
@@ -147,106 +138,6 @@ contract StaticATokenLM is
     (uint256 shares, ) = _deposit(msg.sender, receiver, 0, assets, referralCode, depositToAave);
     return shares;
   }
-
-  // ///@inheritdoc IStaticATokenLM
-  // function metaDeposit(
-  //   address depositor,
-  //   address receiver,
-  //   uint256 assets,
-  //   uint16 referralCode,
-  //   bool depositToAave,
-  //   uint256 deadline,
-  //   PermitParams calldata permit,
-  //   SignatureParams calldata sigParams
-  // ) external returns (uint256) {
-  //   require(depositor != address(0), StaticATokenErrors.INVALID_DEPOSITOR);
-  //   //solium-disable-next-line
-  //   require(deadline >= block.timestamp, StaticATokenErrors.INVALID_EXPIRATION);
-  //   // Unchecked because the only math done is incrementing
-  //   // the owner's nonce which cannot realistically overflow.
-  //   unchecked {
-  //     bytes32 digest = keccak256(
-  //       abi.encodePacked(
-  //         '\x19\x01',
-  //         _domainSeparatorV4(),
-  //         keccak256(
-  //           abi.encode(
-  //             METADEPOSIT_TYPEHASH,
-  //             depositor,
-  //             receiver,
-  //             assets,
-  //             referralCode,
-  //             depositToAave,
-  //             _useNonce(depositor),
-  //             deadline
-  //           )
-  //         )
-  //       )
-  //     );
-  //     require(
-  //       depositor == ecrecover(digest, sigParams.v, sigParams.r, sigParams.s),
-  //       StaticATokenErrors.INVALID_SIGNATURE
-  //     );
-  //   }
-  //   // assume if deadline 0 no permit was supplied
-  //   if (permit.deadline != 0) {
-  //     try
-  //       IERC20WithPermit(depositToAave ? address(_aTokenUnderlying) : address(_aToken)).permit(
-  //         depositor,
-  //         address(this),
-  //         permit.value,
-  //         permit.deadline,
-  //         permit.v,
-  //         permit.r,
-  //         permit.s
-  //       )
-  //     {} catch {}
-  //   }
-  //   (uint256 shares, ) = _deposit(depositor, receiver, 0, assets, referralCode, depositToAave);
-  //   return shares;
-  // }
-
-  // ///@inheritdoc IStaticATokenLM
-  // function metaWithdraw(
-  //   address owner,
-  //   address receiver,
-  //   uint256 shares,
-  //   uint256 assets,
-  //   bool withdrawFromAave,
-  //   uint256 deadline,
-  //   SignatureParams calldata sigParams
-  // ) external returns (uint256, uint256) {
-  //   require(owner != address(0), StaticATokenErrors.INVALID_OWNER);
-  //   //solium-disable-next-line
-  //   require(deadline >= block.timestamp, StaticATokenErrors.INVALID_EXPIRATION);
-  //   // Unchecked because the only math done is incrementing
-  //   // the owner's nonce which cannot realistically overflow.
-  //   unchecked {
-  //     bytes32 digest = keccak256(
-  //       abi.encodePacked(
-  //         '\x19\x01',
-  //         _domainSeparatorV4(),
-  //         keccak256(
-  //           abi.encode(
-  //             METAWITHDRAWAL_TYPEHASH,
-  //             owner,
-  //             receiver,
-  //             shares,
-  //             assets,
-  //             withdrawFromAave,
-  //             _useNonce(owner),
-  //             deadline
-  //           )
-  //         )
-  //       )
-  //     );
-  //     require(
-  //       owner == ecrecover(digest, sigParams.v, sigParams.r, sigParams.s),
-  //       StaticATokenErrors.INVALID_SIGNATURE
-  //     );
-  //   }
-  //   return _withdraw(owner, receiver, shares, assets, withdrawFromAave);
-  // }
 
   ///@inheritdoc IStaticATokenLM
   function rate() public view returns (uint256) {

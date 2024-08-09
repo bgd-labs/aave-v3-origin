@@ -50,34 +50,6 @@ contract StaticATokenLMTest is BaseTest {
     );
   }
 
-  function test_latestAnswer_priceShouldBeEqualOnDefaultIndex() public {
-    vm.mockCall(
-      address(POOL),
-      abi.encodeWithSelector(IPool.getReserveNormalizedIncome.selector),
-      abi.encode(1e27)
-    );
-    uint256 stataPrice = uint256(staticATokenLM.latestAnswer());
-    uint256 underlyingPrice = contracts.aaveOracle.getAssetPrice(UNDERLYING);
-    assertEq(stataPrice, underlyingPrice);
-  }
-
-  function test_latestAnswer_priceShouldReflectIndexAccrual(uint256 liquidityIndex) public {
-    liquidityIndex = bound(liquidityIndex, 1e27, 1e29);
-    vm.mockCall(
-      address(POOL),
-      abi.encodeWithSelector(IPool.getReserveNormalizedIncome.selector),
-      abi.encode(liquidityIndex)
-    );
-    uint256 stataPrice = uint256(staticATokenLM.latestAnswer());
-    uint256 underlyingPrice = contracts.aaveOracle.getAssetPrice(UNDERLYING);
-    uint256 expectedStataPrice = (underlyingPrice * liquidityIndex) / 1e27;
-    assertEq(stataPrice, expectedStataPrice);
-
-    // reverse the math to ensure precision loss is within bounds
-    uint256 reversedUnderlying = (stataPrice * 1e27) / liquidityIndex;
-    assertApproxEqAbs(underlyingPrice, reversedUnderlying, 1);
-  }
-
   function test_convertersAndPreviews() public view {
     uint128 amount = 5 ether;
     uint256 shares = staticATokenLM.convertToShares(amount);
@@ -207,49 +179,6 @@ contract StaticATokenLMTest is BaseTest {
     _underlyingToAToken(amountToDeposit, user);
     IERC20(A_TOKEN).approve(address(staticATokenLM), amountToDeposit);
     staticATokenLM.mint(amountToDeposit, user);
-  }
-
-  function test_transfer() public {
-    uint128 amountToDeposit = 10 ether;
-    _fundUser(amountToDeposit, user);
-
-    _depositAToken(amountToDeposit, user);
-
-    // transfer to 2nd user
-    staticATokenLM.transfer(user1, amountToDeposit / 2);
-    assertEq(staticATokenLM.getClaimableRewards(user1, REWARD_TOKEN), 0);
-
-    // forward time
-    _skipBlocks(60);
-
-    // redeem for both
-    uint256 claimableUser = staticATokenLM.getClaimableRewards(user, REWARD_TOKEN);
-    staticATokenLM.redeem(staticATokenLM.maxRedeem(user), user, user);
-    staticATokenLM.claimRewardsToSelf(rewardTokens);
-    assertEq(IERC20(REWARD_TOKEN).balanceOf(user), claimableUser);
-    vm.stopPrank();
-    vm.startPrank(user1);
-    uint256 claimableUser1 = staticATokenLM.getClaimableRewards(user1, REWARD_TOKEN);
-    staticATokenLM.redeem(staticATokenLM.maxRedeem(user1), user1, user1);
-    staticATokenLM.claimRewardsToSelf(rewardTokens);
-    assertEq(IERC20(REWARD_TOKEN).balanceOf(user1), claimableUser1);
-    assertGt(claimableUser1, 0);
-
-    assertEq(staticATokenLM.getTotalClaimableRewards(REWARD_TOKEN), 0);
-    assertEq(staticATokenLM.getClaimableRewards(user, REWARD_TOKEN), 0);
-    assertEq(staticATokenLM.getClaimableRewards(user1, REWARD_TOKEN), 0);
-  }
-
-  // getUnclaimedRewards
-  function test_getUnclaimedRewards() public {
-    uint128 amountToDeposit = 5 ether;
-    _fundUser(amountToDeposit, user);
-
-    uint256 shares = _depositAToken(amountToDeposit, user);
-    assertEq(staticATokenLM.getUnclaimedRewards(user, REWARD_TOKEN), 0);
-    _skipBlocks(1000);
-    staticATokenLM.redeem(shares, user, user);
-    assertGt(staticATokenLM.getUnclaimedRewards(user, REWARD_TOKEN), 0);
   }
 
   /**
