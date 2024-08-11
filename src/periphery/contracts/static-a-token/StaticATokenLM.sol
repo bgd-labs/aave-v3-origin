@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.10;
+pragma solidity ^0.8.17;
 
 import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol';
 import {ERC20Upgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol';
 import {ERC20PermitUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PermitUpgradeable.sol';
 import {ERC20PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PausableUpgradeable.sol';
 import {ERC4626Upgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC4626Upgradeable.sol';
-import {IERC4626} from '@openzeppelin/contracts/interfaces/IERC4626.sol';
+import {IERC4626} from 'openzeppelin-contracts/contracts/interfaces/IERC4626.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/interfaces/IERC20.sol';
+import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+import {SafeERC20} from 'openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol';
 
 import {IPool} from '../../../core/contracts/interfaces/IPool.sol';
 import {IPoolAddressesProvider} from '../../../core/contracts/interfaces/IPoolAddressesProvider.sol';
@@ -17,10 +20,6 @@ import {MathUtils} from '../../../core/contracts/protocol/libraries/math/MathUti
 import {IACLManager} from '../../../core/contracts/interfaces/IACLManager.sol';
 import {IRewardsController} from '../rewards/interfaces/IRewardsController.sol';
 import {SafeCast} from 'solidity-utils/contracts/oz-common/SafeCast.sol';
-import {SafeERC20} from 'solidity-utils/contracts/oz-common/SafeERC20.sol';
-import {IERC20Metadata} from 'solidity-utils/contracts/oz-common/interfaces/IERC20Metadata.sol';
-import {IERC20} from 'solidity-utils/contracts/oz-common/interfaces/IERC20.sol';
-import {IERC20WithPermit} from 'solidity-utils/contracts/oz-common/interfaces/IERC20WithPermit.sol';
 import {IRescuable, Rescuable} from 'solidity-utils/contracts/utils/Rescuable.sol';
 
 import {IStaticATokenLM} from './interfaces/IStaticATokenLM.sol';
@@ -57,23 +56,15 @@ contract StaticATokenLM is
   address internal _aTokenUnderlying;
   uint8 internal _decimals;
   address[] internal _rewardTokens;
-  mapping(address => RewardIndexCache) internal _startIndex;
-  mapping(address => mapping(address => UserRewardsData)) internal _userRewardsData;
+  mapping(address user => RewardIndexCache cache) internal _startIndex;
+  mapping(address user => mapping(address reward => UserRewardsData cache))
+    internal _userRewardsData;
 
   constructor(IPool pool, IRewardsController rewardsController) {
     _disableInitializers();
     POOL = pool;
     INCENTIVES_CONTROLLER = rewardsController;
     POOL_ADDRESSES_PROVIDER = pool.ADDRESSES_PROVIDER();
-  }
-
-  modifier onlyPauseGuardian() {
-    if (!canPause(msg.sender)) revert OnlyPauseGuardian(msg.sender);
-    _;
-  }
-
-  function canPause(address actor) public view returns (bool) {
-    return IACLManager(POOL_ADDRESSES_PROVIDER.getACLManager()).isEmergencyAdmin(actor);
   }
 
   ///@inheritdoc IInitializableStaticATokenLM
@@ -98,13 +89,24 @@ contract StaticATokenLM is
     emit Initialized(newAToken, staticATokenName, staticATokenSymbol);
   }
 
-  function decimals() public view override(ERC20Upgradeable, ERC4626Upgradeable) returns (uint8) {
-    return _decimals;
+  modifier onlyPauseGuardian() {
+    if (!canPause(msg.sender)) revert OnlyPauseGuardian(msg.sender);
+    _;
+  }
+
+  ///@inheritdoc IStaticATokenLM
+  function canPause(address actor) public view returns (bool) {
+    return IACLManager(POOL_ADDRESSES_PROVIDER.getACLManager()).isEmergencyAdmin(actor);
   }
 
   /// @inheritdoc IRescuable
   function whoCanRescue() public view override returns (address) {
     return POOL_ADDRESSES_PROVIDER.getACLAdmin();
+  }
+
+  /// @inheritdoc IERC20Metadata
+  function decimals() public view override(ERC20Upgradeable, ERC4626Upgradeable) returns (uint8) {
+    return _decimals;
   }
 
   ///@inheritdoc IStaticATokenLM
@@ -124,17 +126,6 @@ contract StaticATokenLM is
   ///@inheritdoc IStaticATokenLM
   function isRegisteredRewardToken(address reward) public view override returns (bool) {
     return _startIndex[reward].isRegistered;
-  }
-
-  ///@inheritdoc IStaticATokenLM
-  function deposit(
-    uint256 assets,
-    address receiver,
-    uint16 referralCode,
-    bool depositToAave
-  ) external returns (uint256) {
-    (uint256 shares, ) = _deposit(msg.sender, receiver, 0, assets, referralCode, depositToAave);
-    return shares;
   }
 
   ///@inheritdoc IStaticATokenLM
@@ -254,7 +245,7 @@ contract StaticATokenLM is
   ///@inheritdoc IERC4626
   function maxRedeem(address owner) public view override returns (uint256) {
     address cachedATokenUnderlying = _aTokenUnderlying;
-    DataTypes.ReserveDataLegacy memory reserveData = POOL.getReserveData(cachedATokenUnderlying);
+    DataTypes.ReserveData memory reserveData = POOL.getReserveDataExtended(cachedATokenUnderlying);
 
     // if paused or inactive users cannot withdraw underlying
     if (
@@ -266,7 +257,7 @@ contract StaticATokenLM is
 
     // otherwise users can withdraw up to the available amount
     uint256 underlyingTokenBalanceInShares = _convertToShares(
-      IERC20(cachedATokenUnderlying).balanceOf(reserveData.aTokenAddress),
+      reserveData.virtualUnderlyingBalance,
       Rounding.DOWN
     );
     uint256 cachedUserBalance = balanceOf(owner);
@@ -302,6 +293,17 @@ contract StaticATokenLM is
   ///@inheritdoc IERC4626
   function deposit(uint256 assets, address receiver) public override returns (uint256) {
     (uint256 shares, ) = _deposit(msg.sender, receiver, 0, assets, 0, true);
+    return shares;
+  }
+
+  ///@inheritdoc IStaticATokenLM
+  function deposit(
+    uint256 assets,
+    address receiver,
+    uint16 referralCode,
+    bool depositToAave
+  ) external returns (uint256) {
+    (uint256 shares, ) = _deposit(msg.sender, receiver, 0, assets, referralCode, depositToAave);
     return shares;
   }
 

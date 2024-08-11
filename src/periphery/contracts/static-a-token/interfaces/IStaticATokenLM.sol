@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {IERC20} from 'solidity-utils/contracts/oz-common/interfaces/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/interfaces/IERC20.sol';
 import {IInitializableStaticATokenLM} from './IInitializableStaticATokenLM.sol';
 
 interface IStaticATokenLM is IInitializableStaticATokenLM {
@@ -161,6 +161,13 @@ interface IStaticATokenLM is IInitializableStaticATokenLM {
    * @return bool signaling if token is a registered reward.
    */
   function isRegisteredRewardToken(address reward) external view returns (bool);
+
+  /**
+   * @notice Checks if the passed actor is permissioned emergency admin.
+   * @param actor The reward to claim
+   * @return bool signaling if actor can pause the vault.
+   */
+  function canPause(address actor) external view returns (bool);
 
   /**
    * @notice Pauses/unpauses all system's operations
