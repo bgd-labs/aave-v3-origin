@@ -104,45 +104,60 @@ contract StaticATokenLM is
     return POOL_ADDRESSES_PROVIDER.getACLAdmin();
   }
 
-  /// @inheritdoc IERC20Metadata
-  function decimals() public view override(ERC20Upgradeable, ERC4626Upgradeable) returns (uint8) {
-    return _decimals;
+  ///@inheritdoc IERC4626
+  function deposit(uint256 assets, address receiver) public override returns (uint256) {
+    (uint256 shares, ) = _deposit(msg.sender, receiver, 0, assets, 0, true);
+    return shares;
   }
 
   ///@inheritdoc IStaticATokenLM
-  function setPaused(bool paused) external onlyPauseGuardian {
-    if (paused) _pause();
-    else _unpause();
+  function deposit(
+    uint256 assets,
+    address receiver,
+    uint16 referralCode,
+    bool depositToAave
+  ) external returns (uint256) {
+    (uint256 shares, ) = _deposit(msg.sender, receiver, 0, assets, referralCode, depositToAave);
+    return shares;
+  }
+
+  ///@inheritdoc IERC4626
+  function mint(uint256 shares, address receiver) public override returns (uint256) {
+    (, uint256 assets) = _deposit(msg.sender, receiver, shares, 0, 0, true);
+
+    return assets;
+  }
+
+  ///@inheritdoc IERC4626
+  function withdraw(
+    uint256 assets,
+    address receiver,
+    address owner
+  ) public override returns (uint256) {
+    (uint256 shares, ) = _withdraw(owner, receiver, 0, assets, true);
+
+    return shares;
+  }
+
+  ///@inheritdoc IERC4626
+  function redeem(
+    uint256 shares,
+    address receiver,
+    address owner
+  ) public override returns (uint256) {
+    (, uint256 assets) = _withdraw(owner, receiver, shares, 0, true);
+
+    return assets;
   }
 
   ///@inheritdoc IStaticATokenLM
-  function refreshRewardTokens() public override {
-    address[] memory rewards = INCENTIVES_CONTROLLER.getRewardsByAsset(address(_aToken));
-    for (uint256 i = 0; i < rewards.length; i++) {
-      _registerRewardToken(rewards[i]);
-    }
-  }
-
-  ///@inheritdoc IStaticATokenLM
-  function isRegisteredRewardToken(address reward) public view override returns (bool) {
-    return _startIndex[reward].isRegistered;
-  }
-
-  ///@inheritdoc IStaticATokenLM
-  function rate() public view returns (uint256) {
-    return POOL.getReserveNormalizedIncome(_aTokenUnderlying);
-  }
-
-  ///@inheritdoc IStaticATokenLM
-  function collectAndUpdateRewards(address reward) public returns (uint256) {
-    if (reward == address(0)) {
-      return 0;
-    }
-
-    address[] memory assets = new address[](1);
-    assets[0] = address(_aToken);
-
-    return INCENTIVES_CONTROLLER.claimRewards(assets, type(uint256).max, address(this), reward);
+  function redeem(
+    uint256 shares,
+    address receiver,
+    address owner,
+    bool withdrawFromAave
+  ) external returns (uint256, uint256) {
+    return _withdraw(owner, receiver, shares, 0, withdrawFromAave);
   }
 
   ///@inheritdoc IStaticATokenLM
@@ -166,6 +181,42 @@ contract StaticATokenLM is
   ///@inheritdoc IStaticATokenLM
   function claimRewardsToSelf(address[] memory rewards) external {
     _claimRewardsOnBehalf(msg.sender, msg.sender, rewards);
+  }
+
+  /// @inheritdoc IERC20Metadata
+  function decimals() public view override(ERC20Upgradeable, ERC4626Upgradeable) returns (uint8) {
+    return _decimals;
+  }
+
+  ///@inheritdoc IStaticATokenLM
+  function setPaused(bool paused) external onlyPauseGuardian {
+    if (paused) _pause();
+    else _unpause();
+  }
+
+  ///@inheritdoc IStaticATokenLM
+  function refreshRewardTokens() public override {
+    address[] memory rewards = INCENTIVES_CONTROLLER.getRewardsByAsset(address(_aToken));
+    for (uint256 i = 0; i < rewards.length; i++) {
+      _registerRewardToken(rewards[i]);
+    }
+  }
+
+  ///@inheritdoc IStaticATokenLM
+  function collectAndUpdateRewards(address reward) public returns (uint256) {
+    if (reward == address(0)) {
+      return 0;
+    }
+
+    address[] memory assets = new address[](1);
+    assets[0] = address(_aToken);
+
+    return INCENTIVES_CONTROLLER.claimRewards(assets, type(uint256).max, address(this), reward);
+  }
+
+  ///@inheritdoc IStaticATokenLM
+  function isRegisteredRewardToken(address reward) public view override returns (bool) {
+    return _startIndex[reward].isRegistered;
   }
 
   ///@inheritdoc IStaticATokenLM
@@ -199,9 +250,19 @@ contract StaticATokenLM is
     return _userRewardsData[user][reward].unclaimedRewards;
   }
 
+  ///@inheritdoc IStaticATokenLM
+  function rate() public view returns (uint256) {
+    return POOL.getReserveNormalizedIncome(_aTokenUnderlying);
+  }
+
   ///@inheritdoc IERC4626
   function asset() public view override returns (address) {
     return address(_aTokenUnderlying);
+  }
+
+  ///@inheritdoc IERC4626
+  function totalAssets() public view override returns (uint256) {
+    return _aToken.balanceOf(address(this));
   }
 
   ///@inheritdoc IStaticATokenLM
@@ -212,11 +273,6 @@ contract StaticATokenLM is
   ///@inheritdoc IStaticATokenLM
   function rewardTokens() external view returns (address[] memory) {
     return _rewardTokens;
-  }
-
-  ///@inheritdoc IERC4626
-  function totalAssets() public view override returns (uint256) {
-    return _aToken.balanceOf(address(this));
   }
 
   ///@inheritdoc IERC4626
@@ -288,62 +344,6 @@ contract StaticATokenLM is
     uint256 currentSupply = (IAToken(reserveData.aTokenAddress).scaledTotalSupply() +
       reserveData.accruedToTreasury).rayMulRoundUp(_getNormalizedIncome(reserveData));
     return currentSupply > supplyCap ? 0 : supplyCap - currentSupply;
-  }
-
-  ///@inheritdoc IERC4626
-  function deposit(uint256 assets, address receiver) public override returns (uint256) {
-    (uint256 shares, ) = _deposit(msg.sender, receiver, 0, assets, 0, true);
-    return shares;
-  }
-
-  ///@inheritdoc IStaticATokenLM
-  function deposit(
-    uint256 assets,
-    address receiver,
-    uint16 referralCode,
-    bool depositToAave
-  ) external returns (uint256) {
-    (uint256 shares, ) = _deposit(msg.sender, receiver, 0, assets, referralCode, depositToAave);
-    return shares;
-  }
-
-  ///@inheritdoc IERC4626
-  function mint(uint256 shares, address receiver) public override returns (uint256) {
-    (, uint256 assets) = _deposit(msg.sender, receiver, shares, 0, 0, true);
-
-    return assets;
-  }
-
-  ///@inheritdoc IERC4626
-  function withdraw(
-    uint256 assets,
-    address receiver,
-    address owner
-  ) public override returns (uint256) {
-    (uint256 shares, ) = _withdraw(owner, receiver, 0, assets, true);
-
-    return shares;
-  }
-
-  ///@inheritdoc IERC4626
-  function redeem(
-    uint256 shares,
-    address receiver,
-    address owner
-  ) public override returns (uint256) {
-    (, uint256 assets) = _withdraw(owner, receiver, shares, 0, true);
-
-    return assets;
-  }
-
-  ///@inheritdoc IStaticATokenLM
-  function redeem(
-    uint256 shares,
-    address receiver,
-    address owner,
-    bool withdrawFromAave
-  ) external returns (uint256, uint256) {
-    return _withdraw(owner, receiver, shares, 0, withdrawFromAave);
   }
 
   ///@inheritdoc IStaticATokenLM
