@@ -49,8 +49,6 @@ contract StaticATokenLM is
   using WadRayMath for uint256;
   using RayMathExplicitRounding for uint256;
 
-  uint256 public constant STATIC__ATOKEN_LM_REVISION = 3;
-
   IPool public immutable POOL;
   IPoolAddressesProvider immutable POOL_ADDRESSES_PROVIDER;
   IRewardsController public immutable INCENTIVES_CONTROLLER;
