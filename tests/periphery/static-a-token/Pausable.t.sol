@@ -40,8 +40,9 @@ contract StataPausableTest is BaseTest {
     _setPausedAsAclAdmin(true);
     vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
     vm.prank(user);
-    staticATokenLM.deposit(amountToDeposit, user, 0, true);
+    staticATokenLM.deposit(amountToDeposit, user);
   }
+  // TODO: add depositATokens
 
   function test_mint_shouldRevert() external {
     vm.startPrank(user);

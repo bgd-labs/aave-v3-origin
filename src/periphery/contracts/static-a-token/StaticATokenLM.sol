@@ -5,8 +5,7 @@ import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/
 import {ERC20Upgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol';
 import {ERC20PermitUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PermitUpgradeable.sol';
 import {ERC20PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PausableUpgradeable.sol';
-import {ERC4626Upgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC4626Upgradeable.sol';
-import {IERC4626} from 'openzeppelin-contracts/contracts/interfaces/IERC4626.sol';
+import {ERC4626Upgradeable, Math, IERC4626} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC4626Upgradeable.sol';
 import {IERC20} from 'openzeppelin-contracts/contracts/interfaces/IERC20.sol';
 import {IERC20Metadata} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {SafeERC20} from 'openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol';
@@ -43,18 +42,17 @@ contract StaticATokenLM is
   IStaticATokenLM,
   Rescuable
 {
-  using SafeERC20 for IERC20;
   using SafeCast for uint256;
   using WadRayMath for uint256;
   using RayMathExplicitRounding for uint256;
 
+  error StaticATokenLMInvalidZeroShares();
+
   IPool public immutable POOL;
-  IPoolAddressesProvider immutable POOL_ADDRESSES_PROVIDER;
+  IPoolAddressesProvider public immutable POOL_ADDRESSES_PROVIDER;
   IRewardsController public immutable INCENTIVES_CONTROLLER;
 
   IERC20 internal _aToken;
-  address internal _aTokenUnderlying;
-  uint8 internal _decimals;
   address[] internal _rewardTokens;
   mapping(address user => RewardIndexCache cache) internal _startIndex;
   mapping(address user => mapping(address reward => UserRewardsData cache))
@@ -74,13 +72,17 @@ contract StaticATokenLM is
     string calldata staticATokenSymbol
   ) external initializer {
     require(IAToken(newAToken).POOL() == address(POOL));
+
+    IERC20 aTokenUnderlying = IERC20(IAToken(newAToken).UNDERLYING_ASSET_ADDRESS());
+
     __ERC20_init(staticATokenName, staticATokenSymbol);
     __ERC20Permit_init(staticATokenName);
-    _aToken = IERC20(newAToken);
-    _decimals = IERC20Metadata(address(_aToken)).decimals();
+    __ERC4626_init(aTokenUnderlying);
+    __ERC20Pausable_init();
 
-    _aTokenUnderlying = IAToken(newAToken).UNDERLYING_ASSET_ADDRESS();
-    IERC20(_aTokenUnderlying).forceApprove(address(POOL), type(uint256).max);
+    _aToken = IERC20(newAToken);
+
+    SafeERC20.forceApprove(aTokenUnderlying, address(POOL), type(uint256).max);
 
     if (INCENTIVES_CONTROLLER != IRewardsController(address(0))) {
       refreshRewardTokens();
@@ -90,10 +92,13 @@ contract StaticATokenLM is
   }
 
   modifier onlyPauseGuardian() {
-    if (!canPause(msg.sender)) revert OnlyPauseGuardian(msg.sender);
+    if (!canPause(_msgSender())) revert OnlyPauseGuardian(_msgSender());
     _;
   }
 
+  function decimals() public view override(ERC20Upgradeable, ERC4626Upgradeable) returns (uint8) {
+    return ERC4626Upgradeable.decimals();
+  }
   ///@inheritdoc IStaticATokenLM
   function canPause(address actor) public view returns (bool) {
     return IACLManager(POOL_ADDRESSES_PROVIDER.getACLManager()).isEmergencyAdmin(actor);
@@ -104,60 +109,20 @@ contract StaticATokenLM is
     return POOL_ADDRESSES_PROVIDER.getACLAdmin();
   }
 
-  ///@inheritdoc IERC4626
-  function deposit(uint256 assets, address receiver) public override returns (uint256) {
-    (uint256 shares, ) = _deposit(msg.sender, receiver, 0, assets, 0, true);
+  ///@inheritdoc IStaticATokenLM
+  function depositATokens(uint256 assets, address receiver) public returns (uint256) {
+    uint256 shares = previewDeposit(assets);
+    _deposit(_msgSender(), receiver, assets, shares, false);
+
     return shares;
   }
 
   ///@inheritdoc IStaticATokenLM
-  function deposit(
-    uint256 assets,
-    address receiver,
-    uint16 referralCode,
-    bool depositToAave
-  ) external returns (uint256) {
-    (uint256 shares, ) = _deposit(msg.sender, receiver, 0, assets, referralCode, depositToAave);
-    return shares;
-  }
-
-  ///@inheritdoc IERC4626
-  function mint(uint256 shares, address receiver) public override returns (uint256) {
-    (, uint256 assets) = _deposit(msg.sender, receiver, shares, 0, 0, true);
+  function redeemATokens(uint256 shares, address receiver, address owner) public returns (uint256) {
+    uint256 assets = previewRedeem(shares);
+    _withdraw(_msgSender(), receiver, owner, shares, assets, false);
 
     return assets;
-  }
-
-  ///@inheritdoc IERC4626
-  function withdraw(
-    uint256 assets,
-    address receiver,
-    address owner
-  ) public override returns (uint256) {
-    (uint256 shares, ) = _withdraw(owner, receiver, 0, assets, true);
-
-    return shares;
-  }
-
-  ///@inheritdoc IERC4626
-  function redeem(
-    uint256 shares,
-    address receiver,
-    address owner
-  ) public override returns (uint256) {
-    (, uint256 assets) = _withdraw(owner, receiver, shares, 0, true);
-
-    return assets;
-  }
-
-  ///@inheritdoc IStaticATokenLM
-  function redeem(
-    uint256 shares,
-    address receiver,
-    address owner,
-    bool withdrawFromAave
-  ) external returns (uint256, uint256) {
-    return _withdraw(owner, receiver, shares, 0, withdrawFromAave);
   }
 
   ///@inheritdoc IStaticATokenLM
@@ -167,7 +132,7 @@ contract StaticATokenLM is
     address[] memory rewards
   ) external {
     require(
-      msg.sender == onBehalfOf || msg.sender == INCENTIVES_CONTROLLER.getClaimer(onBehalfOf),
+      _msgSender() == onBehalfOf || _msgSender() == INCENTIVES_CONTROLLER.getClaimer(onBehalfOf),
       StaticATokenErrors.INVALID_CLAIMER
     );
     _claimRewardsOnBehalf(onBehalfOf, receiver, rewards);
@@ -175,17 +140,12 @@ contract StaticATokenLM is
 
   ///@inheritdoc IStaticATokenLM
   function claimRewards(address receiver, address[] memory rewards) external {
-    _claimRewardsOnBehalf(msg.sender, receiver, rewards);
+    _claimRewardsOnBehalf(_msgSender(), receiver, rewards);
   }
 
   ///@inheritdoc IStaticATokenLM
   function claimRewardsToSelf(address[] memory rewards) external {
-    _claimRewardsOnBehalf(msg.sender, msg.sender, rewards);
-  }
-
-  /// @inheritdoc IERC20Metadata
-  function decimals() public view override(ERC20Upgradeable, ERC4626Upgradeable) returns (uint8) {
-    return _decimals;
+    _claimRewardsOnBehalf(_msgSender(), _msgSender(), rewards);
   }
 
   ///@inheritdoc IStaticATokenLM
@@ -252,17 +212,7 @@ contract StaticATokenLM is
 
   ///@inheritdoc IStaticATokenLM
   function rate() public view returns (uint256) {
-    return POOL.getReserveNormalizedIncome(_aTokenUnderlying);
-  }
-
-  ///@inheritdoc IERC4626
-  function asset() public view override returns (address) {
-    return address(_aTokenUnderlying);
-  }
-
-  ///@inheritdoc IERC4626
-  function totalAssets() public view override returns (uint256) {
-    return _aToken.balanceOf(address(this));
+    return POOL.getReserveNormalizedIncome(asset());
   }
 
   ///@inheritdoc IStaticATokenLM
@@ -276,32 +226,20 @@ contract StaticATokenLM is
   }
 
   ///@inheritdoc IERC4626
-  function convertToShares(uint256 assets) public view override returns (uint256) {
-    return _convertToShares(assets, Rounding.DOWN);
-  }
-
-  ///@inheritdoc IERC4626
-  function convertToAssets(uint256 shares) public view override returns (uint256) {
-    return _convertToAssets(shares, Rounding.DOWN);
-  }
-
-  ///@inheritdoc IERC4626
   function maxMint(address) public view override returns (uint256) {
     uint256 assets = maxDeposit(address(0));
     if (assets == type(uint256).max) return type(uint256).max;
-    return _convertToShares(assets, Rounding.DOWN);
+    return convertToShares(assets);
   }
 
   ///@inheritdoc IERC4626
   function maxWithdraw(address owner) public view override returns (uint256) {
-    uint256 shares = maxRedeem(owner);
-    return _convertToAssets(shares, Rounding.DOWN);
+    return convertToAssets(maxRedeem(owner));
   }
 
   ///@inheritdoc IERC4626
   function maxRedeem(address owner) public view override returns (uint256) {
-    address cachedATokenUnderlying = _aTokenUnderlying;
-    DataTypes.ReserveData memory reserveData = POOL.getReserveDataExtended(cachedATokenUnderlying);
+    DataTypes.ReserveData memory reserveData = POOL.getReserveDataExtended(asset());
 
     // if paused or inactive users cannot withdraw underlying
     if (
@@ -312,10 +250,7 @@ contract StaticATokenLM is
     }
 
     // otherwise users can withdraw up to the available amount
-    uint256 underlyingTokenBalanceInShares = _convertToShares(
-      reserveData.virtualUnderlyingBalance,
-      Rounding.DOWN
-    );
+    uint256 underlyingTokenBalanceInShares = convertToShares(reserveData.virtualUnderlyingBalance);
     uint256 cachedUserBalance = balanceOf(owner);
     return
       underlyingTokenBalanceInShares >= cachedUserBalance
@@ -325,7 +260,7 @@ contract StaticATokenLM is
 
   ///@inheritdoc IERC4626
   function maxDeposit(address) public view override returns (uint256) {
-    DataTypes.ReserveDataLegacy memory reserveData = POOL.getReserveData(_aTokenUnderlying);
+    DataTypes.ReserveDataLegacy memory reserveData = POOL.getReserveData(asset());
 
     // if inactive, paused or frozen users cannot deposit underlying
     if (
@@ -342,101 +277,92 @@ contract StaticATokenLM is
     if (supplyCap == 0) return type(uint256).max;
     // return remaining supply cap margin
     uint256 currentSupply = (IAToken(reserveData.aTokenAddress).scaledTotalSupply() +
-      reserveData.accruedToTreasury).rayMulRoundUp(_getNormalizedIncome(reserveData));
+      reserveData.accruedToTreasury).rayMulRoundUp(rate());
     return currentSupply > supplyCap ? 0 : supplyCap - currentSupply;
   }
 
   ///@inheritdoc IStaticATokenLM
   function latestAnswer() external view returns (int256) {
-    return
-      int256(
-        (IAaveOracle(POOL_ADDRESSES_PROVIDER.getPriceOracle()).getAssetPrice(_aTokenUnderlying) *
-          POOL.getReserveNormalizedIncome(_aTokenUnderlying)) / 1e27
-      );
+    uint256 aTokenUnderlyingAssetPrice = IAaveOracle(POOL_ADDRESSES_PROVIDER.getPriceOracle())
+      .getAssetPrice(asset());
+    return int256(convertToAssets(aTokenUnderlyingAssetPrice));
   }
 
   function _deposit(
-    address depositor,
+    address caller,
     address receiver,
-    uint256 _shares,
-    uint256 _assets,
-    uint16 referralCode,
+    uint256 assets,
+    uint256 shares,
     bool depositToAave
-  ) internal returns (uint256, uint256) {
-    require(receiver != address(0), StaticATokenErrors.INVALID_RECIPIENT);
-    require(_shares == 0 || _assets == 0, StaticATokenErrors.ONLY_ONE_AMOUNT_FORMAT_ALLOWED);
-
-    uint256 assets = _assets;
-    uint256 shares = _shares;
-    if (shares > 0) {
-      if (depositToAave) {
-        require(shares <= maxMint(receiver), 'ERC4626: mint more than max');
-      }
-      assets = previewMint(shares);
-    } else {
-      if (depositToAave) {
-        require(assets <= maxDeposit(receiver), 'ERC4626: deposit more than max');
-      }
-      shares = previewDeposit(assets);
+  ) internal {
+    if (shares == 0) {
+      revert StaticATokenLMInvalidZeroShares();
     }
-    require(shares != 0, StaticATokenErrors.INVALID_ZERO_AMOUNT);
+    // If _asset is ERC777, `transferFrom` can trigger a reentrancy BEFORE the transfer happens through the
+    // `tokensToSend` hook. On the other hand, the `tokenReceived` hook, that is triggered after the transfer,
+    // calls the vault, which is assumed not malicious.
+    //
+    // Conclusion: we need to do the transfer before we mint so that any reentrancy would happen before the
+    // assets are transferred and before the shares are minted, which is a valid state.
+    // slither-disable-next-line reentrancy-no-eth
 
     if (depositToAave) {
-      address cachedATokenUnderlying = _aTokenUnderlying;
-      IERC20(cachedATokenUnderlying).safeTransferFrom(depositor, address(this), assets);
-      POOL.deposit(cachedATokenUnderlying, assets, address(this), referralCode);
+      address cachedAsset = asset();
+      SafeERC20.safeTransferFrom(IERC20(cachedAsset), caller, address(this), assets);
+      POOL.deposit(cachedAsset, assets, address(this), 0);
     } else {
-      _aToken.safeTransferFrom(depositor, address(this), assets);
+      SafeERC20.safeTransferFrom(_aToken, caller, address(this), assets);
     }
-
     _mint(receiver, shares);
 
-    emit Deposit(depositor, receiver, assets, shares);
+    emit Deposit(caller, receiver, assets, shares);
+  }
 
-    return (shares, assets);
+  function _deposit(
+    address caller,
+    address receiver,
+    uint256 assets,
+    uint256 shares
+  ) internal virtual override {
+    _deposit(caller, receiver, assets, shares, true);
   }
 
   function _withdraw(
-    address owner,
+    address caller,
     address receiver,
-    uint256 _shares,
-    uint256 _assets,
+    address owner,
+    uint256 assets,
+    uint256 shares,
     bool withdrawFromAave
-  ) internal returns (uint256, uint256) {
-    require(receiver != address(0), StaticATokenErrors.INVALID_RECIPIENT);
-    require(_shares == 0 || _assets == 0, StaticATokenErrors.ONLY_ONE_AMOUNT_FORMAT_ALLOWED);
-    require(_shares != _assets, StaticATokenErrors.INVALID_ZERO_AMOUNT);
-
-    uint256 assets = _assets;
-    uint256 shares = _shares;
-
-    if (shares > 0) {
-      if (withdrawFromAave) {
-        require(shares <= maxRedeem(owner), 'ERC4626: redeem more than max');
-      }
-      assets = previewRedeem(shares);
-    } else {
-      if (withdrawFromAave) {
-        require(assets <= maxWithdraw(owner), 'ERC4626: withdraw more than max');
-      }
-      shares = previewWithdraw(assets);
+  ) internal virtual {
+    if (caller != owner) {
+      _spendAllowance(owner, caller, shares);
     }
 
-    if (msg.sender != owner) {
-      _spendAllowance(owner, msg.sender, shares);
-    }
-
+    // If _asset is ERC777, `transfer` can trigger a reentrancy AFTER the transfer happens through the
+    // `tokensReceived` hook. On the other hand, the `tokensToSend` hook, that is triggered before the transfer,
+    // calls the vault, which is assumed not malicious.
+    //
+    // Conclusion: we need to do the transfer after the burn so that any reentrancy would happen after the
+    // shares are burned and after the assets are transferred, which is a valid state.
     _burn(owner, shares);
-
-    emit Withdraw(msg.sender, receiver, owner, assets, shares);
-
     if (withdrawFromAave) {
-      POOL.withdraw(_aTokenUnderlying, assets, receiver);
+      POOL.withdraw(asset(), assets, receiver);
     } else {
-      _aToken.safeTransfer(receiver, assets);
+      SafeERC20.safeTransfer(_aToken, receiver, assets);
     }
 
-    return (shares, assets);
+    emit Withdraw(caller, receiver, owner, assets, shares);
+  }
+
+  function _withdraw(
+    address caller,
+    address receiver,
+    address owner,
+    uint256 assets,
+    uint256 shares
+  ) internal virtual override {
+    _withdraw(caller, receiver, owner, assets, shares, true);
   }
 
   /**
@@ -566,18 +492,24 @@ contract StaticATokenLM is
         _userRewardsData[onBehalfOf][rewards[i]].unclaimedRewards = unclaimedReward.toUint128();
         _userRewardsData[onBehalfOf][rewards[i]].rewardsIndexOnLastInteraction = currentRewardsIndex
           .toUint128();
-        IERC20(rewards[i]).safeTransfer(receiver, userReward);
+        SafeERC20.safeTransfer(IERC20(rewards[i]), receiver, userReward);
       }
     }
   }
 
-  function _convertToShares(uint256 assets, Rounding rounding) internal view returns (uint256) {
-    if (rounding == Rounding.UP) return assets.rayDivRoundUp(rate());
+  function _convertToShares(
+    uint256 assets,
+    Math.Rounding rounding
+  ) internal view virtual override returns (uint256) {
+    if (Math.unsignedRoundsUp(rounding)) return assets.rayDivRoundUp(rate());
     return assets.rayDivRoundDown(rate());
   }
 
-  function _convertToAssets(uint256 shares, Rounding rounding) internal view returns (uint256) {
-    if (rounding == Rounding.UP) return shares.rayMulRoundUp(rate());
+  function _convertToAssets(
+    uint256 shares,
+    Math.Rounding rounding
+  ) internal view virtual override returns (uint256) {
+    if (Math.unsignedRoundsUp(rounding)) return shares.rayMulRoundUp(rate());
     return shares.rayMulRoundDown(rate());
   }
 
@@ -593,30 +525,5 @@ contract StaticATokenLM is
     _startIndex[reward] = RewardIndexCache(true, startIndex.toUint240());
 
     emit RewardTokenRegistered(reward, startIndex);
-  }
-
-  /**
-   * Copy of https://github.com/aave/aave-v3-core/blob/29ff9b9f89af7cd8255231bc5faf26c3ce0fb7ce/contracts/protocol/libraries/logic/ReserveLogic.sol#L47 with memory instead of calldata
-   * @notice Returns the ongoing normalized income for the reserve.
-   * @dev A value of 1e27 means there is no income. As time passes, the income is accrued
-   * @dev A value of 2*1e27 means for each unit of asset one unit of income has been accrued
-   * @param reserve The reserve object
-   * @return The normalized income, expressed in ray
-   */
-  function _getNormalizedIncome(
-    DataTypes.ReserveDataLegacy memory reserve
-  ) internal view returns (uint256) {
-    uint40 timestamp = reserve.lastUpdateTimestamp;
-
-    //solium-disable-next-line
-    if (timestamp == block.timestamp) {
-      //if the index was updated in the same block, no need to perform any calculation
-      return reserve.liquidityIndex;
-    } else {
-      return
-        MathUtils.calculateLinearInterest(reserve.currentLiquidityRate, timestamp).rayMul(
-          reserve.liquidityIndex
-        );
-    }
   }
 }

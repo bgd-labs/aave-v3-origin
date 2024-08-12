@@ -83,7 +83,7 @@ contract StaticATokenLMTest is BaseTest {
     _depositAToken(amountToDeposit, user);
 
     assertEq(staticATokenLM.maxRedeem(user), staticATokenLM.balanceOf(user));
-    staticATokenLM.redeem(staticATokenLM.maxRedeem(user), user, user, false);
+    staticATokenLM.redeemATokens(staticATokenLM.maxRedeem(user), user, user);
     assertEq(staticATokenLM.balanceOf(user), 0);
     assertLe(IERC20(A_TOKEN).balanceOf(user), amountToDeposit);
     assertApproxEqAbs(IERC20(A_TOKEN).balanceOf(user), amountToDeposit, 1);
