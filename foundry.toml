@@ -15,6 +15,7 @@ fs_permissions = [{access = "write", path = "./reports"}, {access = "read", path
 ffi = true
 
 [profile.default.zksync]
+zksolc = '1.4.1'
 compile = true
 fallback_oz = true
 mode = '3'
