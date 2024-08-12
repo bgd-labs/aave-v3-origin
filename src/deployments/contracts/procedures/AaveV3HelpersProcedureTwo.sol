@@ -16,7 +16,7 @@ contract AaveV3HelpersProcedureTwo is IErrors {
   ) internal returns (StaticATokenReport memory staticATokenReport) {
     if (proxyAdmin == address(0)) revert ProxyAdminNotFound();
 
-    staticATokenReport.transparentProxyFactory = address(new TransparentProxyFactory());
+    staticATokenReport.transparentProxyFactory = 0x903A3228c4C58e94787CB33EE83e087bCFcF0a91;
     staticATokenReport.staticATokenImplementation = address(
       new StaticATokenLM(IPool(pool), IRewardsController(rewardsController))
     );
