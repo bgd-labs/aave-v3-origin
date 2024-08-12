@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 import './MarketInput.sol';
 
 contract ZkSyncInput is MarketInput {
-  address public constant GUARDIAN = 0x6ec33534BE07d45cc4E02Fbd127F8ed2aE919a6b; // TODO: deployer address, should be changed later
+  address public constant GUARDIAN = 0xba845c27903F7dDB5c676e5b74728C871057E000;
   address public constant EXECUTOR_LVL_1 = 0x04cE39789e11a49595cD0ECEf6f4Bd54ABF4d020;
 
   function _getMarketInput(
@@ -23,7 +23,7 @@ contract ZkSyncInput is MarketInput {
     roles.emergencyAdmin = GUARDIAN;
     roles.poolAdmin = EXECUTOR_LVL_1;
 
-    flags.l2 = true;
+    flags.l2 = false;
 
     config.marketId = 'Aave V3 ZkSync Market';
     config.providerId = 44;

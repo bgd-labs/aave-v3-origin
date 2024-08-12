@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Create2Utils} from '../utilities/Create2Utils.sol';
+import {Create2UtilsZkSync} from 'solidity-utils/../zksync/src/contracts/utils/ScriptUtilsZkSync.sol';
 import {ConfigEngineReport} from '../../interfaces/IMarketReportTypes.sol';
 import {AaveV3ConfigEngine, IAaveV3ConfigEngine, CapsEngine, BorrowEngine, CollateralEngine, RateEngine, PriceFeedEngine, EModeEngine, ListingEngine} from 'aave-v3-periphery/contracts/v3-config-engine/AaveV3ConfigEngine.sol';
 import {IPool} from 'aave-v3-core/contracts/interfaces/IPool.sol';
@@ -22,13 +22,13 @@ contract AaveV3HelpersProcedureOne {
   ) internal returns (ConfigEngineReport memory configEngineReport) {
     IAaveV3ConfigEngine.EngineLibraries memory engineLibraries = IAaveV3ConfigEngine
       .EngineLibraries({
-        listingEngine: Create2Utils._create2Deploy('v1', type(ListingEngine).creationCode),
-        eModeEngine: Create2Utils._create2Deploy('v1', type(EModeEngine).creationCode),
-        borrowEngine: Create2Utils._create2Deploy('v1', type(BorrowEngine).creationCode),
-        collateralEngine: Create2Utils._create2Deploy('v1', type(CollateralEngine).creationCode),
-        priceFeedEngine: Create2Utils._create2Deploy('v1', type(PriceFeedEngine).creationCode),
-        rateEngine: Create2Utils._create2Deploy('v1', type(RateEngine).creationCode),
-        capsEngine: Create2Utils._create2Deploy('v1', type(CapsEngine).creationCode)
+        listingEngine: Create2UtilsZkSync.create2Deploy('v1', type(ListingEngine).creationCode),
+        eModeEngine: Create2UtilsZkSync.create2Deploy('v1', type(EModeEngine).creationCode),
+        borrowEngine: Create2UtilsZkSync.create2Deploy('v1', type(BorrowEngine).creationCode),
+        collateralEngine: Create2UtilsZkSync.create2Deploy('v1', type(CollateralEngine).creationCode),
+        priceFeedEngine: Create2UtilsZkSync.create2Deploy('v1', type(PriceFeedEngine).creationCode),
+        rateEngine: Create2UtilsZkSync.create2Deploy('v1', type(RateEngine).creationCode),
+        capsEngine: Create2UtilsZkSync.create2Deploy('v1', type(CapsEngine).creationCode)
       });
 
     IAaveV3ConfigEngine.EngineConstants memory engineConstants = IAaveV3ConfigEngine
