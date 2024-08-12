@@ -294,7 +294,7 @@ contract StaticATokenLM is
     uint256 assets,
     uint256 shares,
     bool depositToAave
-  ) internal {
+  ) internal virtual {
     if (shares == 0) {
       revert StaticATokenLMInvalidZeroShares();
     }
