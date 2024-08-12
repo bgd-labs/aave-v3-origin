@@ -28,6 +28,7 @@ contract ZkSyncInput is MarketInput {
     config.marketId = 'Aave V3 ZkSync Market';
     config.providerId = 44;
     config.oracleDecimals = 8;
+    config.proxyAdmin = 0x158d6c497317367CEa3CBAb0BD84E6de236F060D;
     // eth-usd chainlink price feed
     config
       .marketReferenceCurrencyPriceInUsdProxyAggregator = 0x6D41d1dc818112880b40e26BD6FD347E41008eDA;
