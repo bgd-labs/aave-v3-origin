@@ -20,16 +20,16 @@ import {IStata4626LM, IInitializableStata4626LM} from './interfaces/IStata4626LM
 contract Stata4626LM is Stata4626, IStata4626LM {
   using SafeCast for uint256;
 
-  /// @custom:storage-location erc7201:bgdlabs.storage.Stata4626LM
+  /// @custom:storage-location erc7201:aave-dao.storage.Stata4626LM
   struct Stata4626LMStorage {
     address[] _rewardTokens;
     mapping(address user => RewardIndexCache cache) _startIndex;
     mapping(address user => mapping(address reward => UserRewardsData cache)) _userRewardsData;
   }
 
-  // keccak256(abi.encode(uint256(keccak256("bgdlabs.storage.Stata4626LM")) - 1)) & ~bytes32(uint256(0xff))
+  // keccak256(abi.encode(uint256(keccak256("aave-dao.storage.Stata4626LM")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 private constant Stata4626LMStorageLocation =
-    0x4b16b74053db30532fafa899372b1a08a698dc071633d0d23c7c6579099e6d00;
+    0x4a43e5c82db1d4c294eb6c47f1b5f92e6755a2055d3e0d4bb07e80af15cd9d00;
 
   function _getStata4626LMStorage() private pure returns (Stata4626LMStorage storage $) {
     assembly {

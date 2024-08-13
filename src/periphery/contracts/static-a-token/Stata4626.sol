@@ -36,14 +36,14 @@ contract Stata4626 is
 {
   using RayMathExplicitRounding for uint256;
 
-  /// @custom:storage-location erc7201:bgdlabs.storage.Stata4626
+  /// @custom:storage-location erc7201:aave-dao.storage.Stata4626
   struct Stata4626Storage {
     IERC20 _aToken;
   }
 
-  // keccak256(abi.encode(uint256(keccak256("bgdlabs.storage.Stata4626")) - 1)) & ~bytes32(uint256(0xff))
+  // keccak256(abi.encode(uint256(keccak256("aave-dao.storage.Stata4626")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 private constant Stata4626StorageLocation =
-    0xa03cf8377441b867c9f252fedb46fd0af375d1075810116eb27b1c60929f6700;
+    0x4865e395e8f896b2ca01e8489fd809975f6c70c69fd3d1cf5d2263a21a649200;
 
   function _getStata4626Storage() private pure returns (Stata4626Storage storage $) {
     assembly {
