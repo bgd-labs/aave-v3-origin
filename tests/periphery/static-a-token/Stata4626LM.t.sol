@@ -4,16 +4,17 @@ pragma solidity ^0.8.10;
 import {IRescuable} from 'solidity-utils/contracts/utils/Rescuable.sol';
 import {ERC20PermitUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PermitUpgradeable.sol';
 import {Initializable} from 'openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol';
+import {IERC20Metadata, IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+
 import {AToken} from '../../../src/core/contracts/protocol/tokenization/AToken.sol';
 import {DataTypes} from '../../../src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {IERC20, IERC20Metadata} from '../../../src/periphery/contracts/static-a-token/StaticATokenLM.sol';
 import {RayMathExplicitRounding} from '../../../src/periphery/contracts/libraries/RayMathExplicitRounding.sol';
-import {IStaticATokenLM} from '../../../src/periphery/contracts/static-a-token/interfaces/IStaticATokenLM.sol';
+import {IStata4626LM} from '../../../src/periphery/contracts/static-a-token/interfaces/IStata4626LM.sol';
 import {SigUtils} from '../../utils/SigUtils.sol';
 import {BaseTest, TestnetERC20} from './TestBase.sol';
 import {IPool} from '../../../src/core/contracts/interfaces/IPool.sol';
 
-contract StaticATokenLMTest is BaseTest {
+contract Stata4626LMTest is BaseTest {
   using RayMathExplicitRounding for uint256;
 
   function setUp() public override {
@@ -28,7 +29,7 @@ contract StaticATokenLMTest is BaseTest {
   function test_initializeShouldRevert() public {
     address impl = factory.STATIC_A_TOKEN_IMPL();
     vm.expectRevert(Initializable.InvalidInitialization.selector);
-    IStaticATokenLM(impl).initialize(A_TOKEN, 'hey', 'ho');
+    IStata4626LM(impl).initialize(A_TOKEN, 'hey', 'ho');
   }
 
   function test_getters() public view {

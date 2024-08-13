@@ -1,17 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {IPool} from '../../../../core/contracts/interfaces/IPool.sol';
-import {IAaveIncentivesController} from '../../../../core/contracts/interfaces/IAaveIncentivesController.sol';
-
+// TODO: I would remove it tbh
 /**
- * @title IInitializableStaticATokenLM
- * @notice Interface for the initialize function on StaticATokenLM
+ * @title IInitializableStata4626LM
+ * @notice Interface for the initialize function on Stata4626LM
  * @author Aave
  **/
-interface IInitializableStaticATokenLM {
+interface IInitializableStata4626LM {
   /**
-   * @dev Emitted when a StaticATokenLM is initialized
+   * @dev Emitted when a Stata4626LM is initialized
    * @param aToken The address of the underlying aToken (aWETH)
    * @param staticATokenName The name of the Static aToken
    * @param staticATokenSymbol The symbol of the Static aToken
@@ -19,7 +17,7 @@ interface IInitializableStaticATokenLM {
   event Initialized(address indexed aToken, string staticATokenName, string staticATokenSymbol);
 
   /**
-   * @dev Initializes the StaticATokenLM
+   * @dev Initializes the Stata4626LM
    * @param aToken The address of the underlying aToken (aWETH)
    * @param staticATokenName The name of the Static aToken
    * @param staticATokenSymbol The symbol of the Static aToken

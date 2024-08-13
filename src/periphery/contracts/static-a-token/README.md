@@ -17,7 +17,7 @@ The static-a-token contains an [EIP-4626](https://eips.ethereum.org/EIPS/eip-462
 - **Upgradable by the Aave governance.** Similar to other contracts of the Aave ecosystem, the Level 1 executor (short executor) will be able to add new features to the deployed instances of the `stataTokens`.
 - **Powered by a stataToken Factory.** Whenever a token will be listed on Aave v3, anybody will be able to call the stataToken Factory to deploy an instance for the new asset, permissionless, but still assuring the code used and permissions are properly configured without any extra headache.
 
-See [IStaticATokenLM.sol](./interfaces/IStaticATokenLM.sol) for detailed method documentation.
+See [IStata4626LM.sol](./interfaces/IStata4626LM.sol) for detailed method documentation.
 
 ## Deployed Addresses
 
@@ -76,9 +76,9 @@ It is important to note that:
 
 ```
 git checkout main
-forge inspect src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM storage-layout --pretty > reports/StaticATokenStorageBefore.md
+forge inspect src/periphery/contracts/static-a-token/Stata4626LM.sol:Stata4626LM storage-layout --pretty > reports/StaticATokenStorageBefore.md
 git checkout project-a
-forge inspect src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM storage-layout --pretty > reports/StaticATokenStorageAfter.md
+forge inspect src/periphery/contracts/static-a-token/Stata4626LM.sol:Stata4626LM storage-layout --pretty > reports/StaticATokenStorageAfter.md
 make git-diff before=reports/StaticATokenStorageBefore.md after=reports/StaticATokenStorageAfter.md out=StaticATokenStorageDiff
 ```
 
@@ -90,12 +90,12 @@ index a7e3105..89e0967 100644
 @@ -1,7 +1,6 @@
  | Name               | Type                                                                           | Slot | Offset | Bytes | Contract                                                                 |
  | ------------------ | ------------------------------------------------------------------------------ | ---- | ------ | ----- | ------------------------------------------------------------------------ |
--| \_initialized      | uint8                                                                          | 0    | 0      | 1     | src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM |
--| \_initializing     | bool                                                                           | 0    | 1      | 1     | src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM |
-+| \_\_deprecated     | uint256                                                                        | 0    | 0      | 32    | src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM |
- | name               | string                                                                         | 1    | 0      | 32    | src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM |
- | symbol             | string                                                                         | 2    | 0      | 32    | src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM |
- | decimals           | uint8                                                                          | 3    | 0      | 1     | src/periphery/contracts/static-a-token/StaticATokenLM.sol:StaticATokenLM |
+-| \_initialized      | uint8                                                                          | 0    | 0      | 1     | src/periphery/contracts/static-a-token/Stata4626LM.sol:Stata4626LM |
+-| \_initializing     | bool                                                                           | 0    | 1      | 1     | src/periphery/contracts/static-a-token/Stata4626LM.sol:Stata4626LM |
++| \_\_deprecated     | uint256                                                                        | 0    | 0      | 32    | src/periphery/contracts/static-a-token/Stata4626LM.sol:Stata4626LM |
+ | name               | string                                                                         | 1    | 0      | 32    | src/periphery/contracts/static-a-token/Stata4626LM.sol:Stata4626LM |
+ | symbol             | string                                                                         | 2    | 0      | 32    | src/periphery/contracts/static-a-token/Stata4626LM.sol:Stata4626LM |
+ | decimals           | uint8                                                                          | 3    | 0      | 1     | src/periphery/contracts/static-a-token/Stata4626LM.sol:Stata4626LM |
 ```
 
 ### Umbrella upgrade plan

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.10;
 
-import {IStaticATokenLM} from '../../src/periphery/contracts/static-a-token/interfaces/IStaticATokenLM.sol';
+import {IStata4626LM} from '../../src/periphery/contracts/static-a-token/interfaces/IStata4626LM.sol';
 
 library SigUtils {
   struct Permit {

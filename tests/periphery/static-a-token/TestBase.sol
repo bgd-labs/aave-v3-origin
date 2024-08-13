@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
+import {IERC20Metadata, IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {IRewardsController} from '../../../src/periphery/contracts/rewards/interfaces/IRewardsController.sol';
 import {RewardsDataTypes} from '../../../src/periphery/contracts/rewards/libraries/RewardsDataTypes.sol';
 import {PullRewardsTransferStrategy} from '../../../src/periphery/contracts/rewards/transfer-strategies/PullRewardsTransferStrategy.sol';
@@ -10,7 +11,7 @@ import {TransparentUpgradeableProxy} from 'solidity-utils/contracts/transparent-
 import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/TransparentProxyFactory.sol';
 import {IPool} from '../../../src/core/contracts/interfaces/IPool.sol';
 import {StaticATokenFactory} from '../../../src/periphery/contracts/static-a-token/StaticATokenFactory.sol';
-import {StaticATokenLM, IStaticATokenLM, IERC20, IERC20Metadata} from '../../../src/periphery/contracts/static-a-token/StaticATokenLM.sol';
+import {Stata4626LM, IStata4626LM} from '../../../src/periphery/contracts/static-a-token/Stata4626LM.sol';
 import {IAToken} from '../../../src/core/contracts/interfaces/IAToken.sol';
 import {TestnetProcedures, TestnetERC20} from '../../utils/TestnetProcedures.sol';
 import {DataTypes} from '../../../src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
@@ -29,7 +30,7 @@ abstract contract BaseTest is TestnetProcedures {
   uint256 internal userPrivateKey;
   uint256 internal spenderPrivateKey;
 
-  StaticATokenLM public staticATokenLM;
+  Stata4626LM public staticATokenLM;
   address public proxyAdmin;
   ITransparentProxyFactory public proxyFactory;
   StaticATokenFactory public factory;
@@ -66,7 +67,7 @@ abstract contract BaseTest is TestnetProcedures {
     factory = StaticATokenFactory(report.staticATokenFactoryProxy);
     factory.createStaticATokens(POOL.getReservesList());
 
-    staticATokenLM = StaticATokenLM(factory.getStaticAToken(UNDERLYING));
+    staticATokenLM = Stata4626LM(factory.getStaticAToken(UNDERLYING));
   }
 
   function _configureLM() internal {

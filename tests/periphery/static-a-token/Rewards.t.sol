@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {AToken} from '../../../src/core/contracts/protocol/tokenization/AToken.sol';
-import {IERC20} from '../../../src/periphery/contracts/static-a-token/StaticATokenLM.sol';
+import {IERC20} from '../../../src/periphery/contracts/static-a-token/Stata4626LM.sol';
 import {BaseTest} from './TestBase.sol';
 
 contract StataRewardsTest is BaseTest {
