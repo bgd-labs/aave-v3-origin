@@ -6,11 +6,9 @@ import {ERC20Upgradeable} from 'openzeppelin-contracts-upgradeable/contracts/tok
 import {ERC20PermitUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PermitUpgradeable.sol';
 import {ERC20PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PausableUpgradeable.sol';
 import {ERC4626Upgradeable, Math, IERC4626} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC4626Upgradeable.sol';
-import {IERC20} from 'openzeppelin-contracts/contracts/interfaces/IERC20.sol';
-import {SafeERC20} from 'openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol';
+import {SafeERC20, IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol';
 
-import {IPool} from '../../../core/contracts/interfaces/IPool.sol';
-import {IPoolAddressesProvider} from '../../../core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IPool, IPoolAddressesProvider} from '../../../core/contracts/interfaces/IPool.sol';
 import {IAaveOracle} from '../../../core/contracts/interfaces/IAaveOracle.sol';
 import {DataTypes, ReserveConfiguration} from '../../../core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {IACLManager} from '../../../core/contracts/interfaces/IACLManager.sol';
@@ -27,7 +25,6 @@ import {IStata4626} from './interfaces/IStata4626.sol';
  * @author BGD labs
  */
 contract Stata4626 is
-  ERC20Upgradeable,
   ERC20PermitUpgradeable,
   ERC20PausableUpgradeable,
   ERC4626Upgradeable,
@@ -187,7 +184,7 @@ contract Stata4626 is
   function latestAnswer() external view returns (int256) {
     uint256 aTokenUnderlyingAssetPrice = IAaveOracle(POOL_ADDRESSES_PROVIDER.getPriceOracle())
       .getAssetPrice(asset());
-    return int256(convertToAssets(aTokenUnderlyingAssetPrice));
+    return int256(aTokenUnderlyingAssetPrice.rayMulRoundDown(_rate()));
   }
 
   function _deposit(
@@ -293,8 +290,8 @@ contract Stata4626 is
     address from,
     address to,
     uint256 amount
-  ) internal virtual override(ERC20Upgradeable, ERC20PausableUpgradeable) whenNotPaused {
-    super._update(from, to, amount);
+  ) internal virtual override(ERC20PausableUpgradeable, ERC20Upgradeable) whenNotPaused {
+    ERC20PausableUpgradeable._update(from, to, amount);
   }
 
   function _rate() internal view returns (uint256) {
