@@ -31,7 +31,7 @@ coverage :; forge coverage --report lcov && \
 	&& coverage=$$(awk -F '[<>]' '/headerCovTableEntryHi/{print $3}' ./report/index.html | sed 's/[^0-9.]//g' | head -n 1); \
 	wget -O ./report/coverage.svg "https://img.shields.io/badge/coverage-$${coverage}%25-brightgreen"
 
-deploy-v3-batched :; forge script --zksync --system-mode=true -vvvvvvvv scripts/DeployAaveV3MarketBatched.sol --rpc-url ${net} --private-key ${PRIVATE_KEY} --sender ${SENDER} --broadcast --skip-simulation --slow
+deploy-v3-batched :; FOUNDRY_PROFILE=zksync forge script --zksync --system-mode=true -vvvvvvvv scripts/DeployAaveV3MarketBatched.sol --rpc-url ${net} --private-key ${PRIVATE_KEY} --sender ${SENDER} --broadcast --skip-simulation --slow
 
 # Utilities
 download :; cast etherscan-source --chain ${chain} -d src/etherscan/${chain}_${address} ${address}
