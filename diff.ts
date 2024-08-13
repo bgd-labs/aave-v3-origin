@@ -14,13 +14,13 @@ function runCmd(cmd: string) {
 }
 
 const API_KEYS = {
-  [Networks.ARBITRUM]: process.env.ETHERSCAN_API_KEY_ARBITRUM,
+  [Networks.MAINNET]: process.env.ETHERSCAN_API_KEY_MAINNET,
   [Networks.ZKSYNC]: process.env.ETHERSCAN_API_KEY_ZKSYNC,
   [Networks.FACTORY_LOCAL]: undefined,
 };
 
 const RPC_URLS = {
-  [Networks.ARBITRUM]: process.env.RPC_ARBITRUM,
+  [Networks.MAINNET]: process.env.RPC_MAINNET,
   [Networks.ZKSYNC]: process.env.RPC_ZKSYNC,
   [Networks.FACTORY_LOCAL]: undefined,
 };
