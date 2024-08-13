@@ -44,13 +44,6 @@ interface IStata4626 {
   function depositATokens(uint256 assets, address receiver) external returns (uint256);
 
   /**
-   * @notice Returns the Aave liquidity index of the underlying aToken, denominated rate here
-   * as it can be considered as an ever-increasing exchange rate
-   * @return The liquidity index
-   **/
-  function rate() external view returns (uint256);
-
-  /**
    * @notice The aToken used inside the 4626 vault.
    * @return IERC20 The aToken IERC20.
    */

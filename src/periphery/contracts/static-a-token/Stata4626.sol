@@ -36,10 +36,23 @@ contract Stata4626 is
 {
   using RayMathExplicitRounding for uint256;
 
+  /// @custom:storage-location erc7201:bgdlabs.storage.Stata4626
+  struct Stata4626Storage {
+    IERC20 _aToken;
+  }
+
+  // keccak256(abi.encode(uint256(keccak256("bgdlabs.storage.Stata4626")) - 1)) & ~bytes32(uint256(0xff))
+  bytes32 private constant Stata4626StorageLocation =
+    0xa03cf8377441b867c9f252fedb46fd0af375d1075810116eb27b1c60929f6700;
+
+  function _getStata4626Storage() private pure returns (Stata4626Storage storage $) {
+    assembly {
+      $.slot := Stata4626StorageLocation
+    }
+  }
+
   IPool public immutable POOL;
   IPoolAddressesProvider public immutable POOL_ADDRESSES_PROVIDER;
-
-  IERC20 internal _aToken;
 
   constructor(IPool pool) {
     _disableInitializers();
@@ -62,7 +75,8 @@ contract Stata4626 is
     __ERC4626_init(aTokenUnderlying);
     __ERC20Pausable_init();
 
-    _aToken = IERC20(newAToken);
+    Stata4626Storage storage $ = _getStata4626Storage();
+    $._aToken = IERC20(newAToken);
 
     SafeERC20.forceApprove(aTokenUnderlying, address(POOL), type(uint256).max);
   }
@@ -108,13 +122,9 @@ contract Stata4626 is
   }
 
   ///@inheritdoc IStata4626
-  function rate() public view returns (uint256) {
-    return POOL.getReserveNormalizedIncome(asset());
-  }
-
-  ///@inheritdoc IStata4626
-  function aToken() external view returns (IERC20) {
-    return _aToken;
+  function aToken() public view returns (IERC20) {
+    Stata4626Storage storage $ = _getStata4626Storage();
+    return $._aToken;
   }
 
   ///@inheritdoc IERC4626
@@ -169,7 +179,7 @@ contract Stata4626 is
     if (supplyCap == 0) return type(uint256).max;
     // return remaining supply cap margin
     uint256 currentSupply = (IAToken(reserveData.aTokenAddress).scaledTotalSupply() +
-      reserveData.accruedToTreasury).rayMulRoundUp(rate());
+      reserveData.accruedToTreasury).rayMulRoundUp(_rate());
     return currentSupply > supplyCap ? 0 : supplyCap - currentSupply;
   }
 
@@ -203,7 +213,8 @@ contract Stata4626 is
       SafeERC20.safeTransferFrom(IERC20(cachedAsset), caller, address(this), assets);
       POOL.deposit(cachedAsset, assets, address(this), 0);
     } else {
-      SafeERC20.safeTransferFrom(_aToken, caller, address(this), assets);
+      Stata4626Storage storage $ = _getStata4626Storage();
+      SafeERC20.safeTransferFrom($._aToken, caller, address(this), assets);
     }
     _mint(receiver, shares);
 
@@ -241,7 +252,8 @@ contract Stata4626 is
     if (withdrawFromAave) {
       POOL.withdraw(asset(), assets, receiver);
     } else {
-      SafeERC20.safeTransfer(_aToken, receiver, assets);
+      Stata4626Storage storage $ = _getStata4626Storage();
+      SafeERC20.safeTransfer($._aToken, receiver, assets);
     }
 
     emit Withdraw(caller, receiver, owner, assets, shares);
@@ -263,8 +275,8 @@ contract Stata4626 is
   ) internal view virtual override returns (uint256) {
     // @dev we use unsignedRoundsUp instead of just simple comparison to be sure that the code will work as expected
     // in case Math.Rounding.Trunc or Math.Rounding.Expand will be passed
-    if (Math.unsignedRoundsUp(rounding)) return assets.rayDivRoundUp(rate());
-    return assets.rayDivRoundDown(rate());
+    if (Math.unsignedRoundsUp(rounding)) return assets.rayDivRoundUp(_rate());
+    return assets.rayDivRoundDown(_rate());
   }
 
   function _convertToAssets(
@@ -273,8 +285,8 @@ contract Stata4626 is
   ) internal view virtual override returns (uint256) {
     // @dev we use unsignedRoundsUp instead of just simple comparison to be sure that the code will work as expected
     // in case Math.Rounding.Trunc or Math.Rounding.Expand will be passed
-    if (Math.unsignedRoundsUp(rounding)) return shares.rayMulRoundUp(rate());
-    return shares.rayMulRoundDown(rate());
+    if (Math.unsignedRoundsUp(rounding)) return shares.rayMulRoundUp(_rate());
+    return shares.rayMulRoundDown(_rate());
   }
 
   function _update(
@@ -283,5 +295,9 @@ contract Stata4626 is
     uint256 amount
   ) internal virtual override(ERC20Upgradeable, ERC20PausableUpgradeable) whenNotPaused {
     super._update(from, to, amount);
+  }
+
+  function _rate() internal view returns (uint256) {
+    return POOL.getReserveNormalizedIncome(asset());
   }
 }

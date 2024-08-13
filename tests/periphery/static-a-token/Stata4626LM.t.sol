@@ -239,7 +239,9 @@ contract Stata4626LMTest is BaseTest {
       50_000 *
         (10 ** IERC20Metadata(UNDERLYING).decimals()) -
         (IERC20Metadata(A_TOKEN).totalSupply() +
-          uint256(reserveData.accruedToTreasury).rayMulRoundUp(staticATokenLM.rate()))
+          uint256(reserveData.accruedToTreasury).rayMulRoundUp(
+            POOL.getReserveNormalizedIncome(UNDERLYING)
+          ))
     );
   }
 

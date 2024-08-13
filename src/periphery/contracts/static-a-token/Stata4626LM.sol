@@ -20,12 +20,24 @@ import {IStata4626LM, IInitializableStata4626LM} from './interfaces/IStata4626LM
 contract Stata4626LM is Stata4626, IStata4626LM {
   using SafeCast for uint256;
 
-  IRewardsController public immutable INCENTIVES_CONTROLLER;
+  /// @custom:storage-location erc7201:bgdlabs.storage.Stata4626LM
+  struct Stata4626LMStorage {
+    address[] _rewardTokens;
+    mapping(address user => RewardIndexCache cache) _startIndex;
+    mapping(address user => mapping(address reward => UserRewardsData cache)) _userRewardsData;
+  }
 
-  address[] internal _rewardTokens;
-  mapping(address user => RewardIndexCache cache) internal _startIndex;
-  mapping(address user => mapping(address reward => UserRewardsData cache))
-    internal _userRewardsData;
+  // keccak256(abi.encode(uint256(keccak256("bgdlabs.storage.Stata4626LM")) - 1)) & ~bytes32(uint256(0xff))
+  bytes32 private constant Stata4626LMStorageLocation =
+    0x4b16b74053db30532fafa899372b1a08a698dc071633d0d23c7c6579099e6d00;
+
+  function _getStata4626LMStorage() private pure returns (Stata4626LMStorage storage $) {
+    assembly {
+      $.slot := Stata4626LMStorageLocation
+    }
+  }
+
+  IRewardsController public immutable INCENTIVES_CONTROLLER;
 
   constructor(IPool pool, IRewardsController rewardsController) Stata4626(pool) {
     INCENTIVES_CONTROLLER = rewardsController;
@@ -71,7 +83,7 @@ contract Stata4626LM is Stata4626, IStata4626LM {
 
   ///@inheritdoc IStata4626LM
   function refreshRewardTokens() public override {
-    address[] memory rewards = INCENTIVES_CONTROLLER.getRewardsByAsset(address(_aToken));
+    address[] memory rewards = INCENTIVES_CONTROLLER.getRewardsByAsset(address(aToken()));
     for (uint256 i = 0; i < rewards.length; i++) {
       _registerRewardToken(rewards[i]);
     }
@@ -84,14 +96,15 @@ contract Stata4626LM is Stata4626, IStata4626LM {
     }
 
     address[] memory assets = new address[](1);
-    assets[0] = address(_aToken);
+    assets[0] = address(aToken());
 
     return INCENTIVES_CONTROLLER.claimRewards(assets, type(uint256).max, address(this), reward);
   }
 
   ///@inheritdoc IStata4626LM
   function isRegisteredRewardToken(address reward) public view override returns (bool) {
-    return _startIndex[reward].isRegistered;
+    Stata4626LMStorage storage $ = _getStata4626LMStorage();
+    return $._startIndex[reward].isRegistered;
   }
 
   ///@inheritdoc IStata4626LM
@@ -99,7 +112,7 @@ contract Stata4626LM is Stata4626, IStata4626LM {
     if (address(reward) == address(0)) {
       return 0;
     }
-    (, uint256 nextIndex) = INCENTIVES_CONTROLLER.getAssetIndex(address(_aToken), reward);
+    (, uint256 nextIndex) = INCENTIVES_CONTROLLER.getAssetIndex(address(aToken()), reward);
     return nextIndex;
   }
 
@@ -110,7 +123,7 @@ contract Stata4626LM is Stata4626, IStata4626LM {
     }
 
     address[] memory assets = new address[](1);
-    assets[0] = address(_aToken);
+    assets[0] = address(aToken());
     uint256 freshRewards = INCENTIVES_CONTROLLER.getUserRewards(assets, address(this), reward);
     return IERC20(reward).balanceOf(address(this)) + freshRewards;
   }
@@ -122,12 +135,14 @@ contract Stata4626LM is Stata4626, IStata4626LM {
 
   ///@inheritdoc IStata4626LM
   function getUnclaimedRewards(address user, address reward) external view returns (uint256) {
-    return _userRewardsData[user][reward].unclaimedRewards;
+    Stata4626LMStorage storage $ = _getStata4626LMStorage();
+    return $._userRewardsData[user][reward].unclaimedRewards;
   }
 
   ///@inheritdoc IStata4626LM
   function rewardTokens() external view returns (address[] memory) {
-    return _rewardTokens;
+    Stata4626LMStorage storage $ = _getStata4626LMStorage();
+    return $._rewardTokens;
   }
 
   /**
@@ -136,8 +151,9 @@ contract Stata4626LM is Stata4626, IStata4626LM {
    * @param to The address of the receiver of tokens
    */
   function _update(address from, address to, uint256 amount) internal override(Stata4626) {
-    for (uint256 i = 0; i < _rewardTokens.length; i++) {
-      address rewardToken = address(_rewardTokens[i]);
+    Stata4626LMStorage storage $ = _getStata4626LMStorage();
+    for (uint256 i = 0; i < $._rewardTokens.length; i++) {
+      address rewardToken = address($._rewardTokens[i]);
       uint256 rewardsIndex = getCurrentRewardsIndex(rewardToken);
       if (from != address(0)) {
         _updateUser(from, rewardsIndex, rewardToken);
@@ -156,16 +172,17 @@ contract Stata4626LM is Stata4626, IStata4626LM {
    * @param rewardToken The address of the reward token
    */
   function _updateUser(address user, uint256 currentRewardsIndex, address rewardToken) internal {
+    Stata4626LMStorage storage $ = _getStata4626LMStorage();
     uint256 balance = balanceOf(user);
     if (balance > 0) {
-      _userRewardsData[user][rewardToken].unclaimedRewards = _getClaimableRewards(
+      $._userRewardsData[user][rewardToken].unclaimedRewards = _getClaimableRewards(
         user,
         rewardToken,
         balance,
         currentRewardsIndex
       ).toUint128();
     }
-    _userRewardsData[user][rewardToken].rewardsIndexOnLastInteraction = currentRewardsIndex
+    $._userRewardsData[user][rewardToken].rewardsIndexOnLastInteraction = currentRewardsIndex
       .toUint128();
   }
 
@@ -201,12 +218,13 @@ contract Stata4626LM is Stata4626, IStata4626LM {
     uint256 balance,
     uint256 currentRewardsIndex
   ) internal view returns (uint256) {
-    RewardIndexCache memory rewardsIndexCache = _startIndex[reward];
+    Stata4626LMStorage storage $ = _getStata4626LMStorage();
+    RewardIndexCache memory rewardsIndexCache = $._startIndex[reward];
     if (!rewardsIndexCache.isRegistered) {
       revert RewardNotInitialized(reward);
     }
 
-    UserRewardsData memory currentUserRewardsData = _userRewardsData[user][reward];
+    UserRewardsData memory currentUserRewardsData = $._userRewardsData[user][reward];
     return
       currentUserRewardsData.unclaimedRewards +
       _getPendingRewards(
@@ -253,9 +271,11 @@ contract Stata4626LM is Stata4626, IStata4626LM {
         userReward = totalRewardTokenBalance;
       }
       if (userReward > 0) {
-        _userRewardsData[onBehalfOf][rewards[i]].unclaimedRewards = unclaimedReward.toUint128();
-        _userRewardsData[onBehalfOf][rewards[i]].rewardsIndexOnLastInteraction = currentRewardsIndex
-          .toUint128();
+        Stata4626LMStorage storage $ = _getStata4626LMStorage();
+        $._userRewardsData[onBehalfOf][rewards[i]].unclaimedRewards = unclaimedReward.toUint128();
+        $
+        ._userRewardsData[onBehalfOf][rewards[i]]
+          .rewardsIndexOnLastInteraction = currentRewardsIndex.toUint128();
         SafeERC20.safeTransfer(IERC20(rewards[i]), receiver, userReward);
       }
     }
@@ -269,8 +289,9 @@ contract Stata4626LM is Stata4626, IStata4626LM {
     if (isRegisteredRewardToken(reward)) return;
     uint256 startIndex = getCurrentRewardsIndex(reward);
 
-    _rewardTokens.push(reward);
-    _startIndex[reward] = RewardIndexCache(true, startIndex.toUint240());
+    Stata4626LMStorage storage $ = _getStata4626LMStorage();
+    $._rewardTokens.push(reward);
+    $._startIndex[reward] = RewardIndexCache(true, startIndex.toUint240());
 
     emit RewardTokenRegistered(reward, startIndex);
   }
