@@ -13,26 +13,30 @@ import {IAToken} from './interfaces/IAToken.sol';
 import {IStata4626} from './interfaces/IStata4626.sol';
 
 /**
- * @title Stata4626Upgradable
+ * @title ERC4626StataTokenUpgradable.sol
  * @notice Wrapper smart contract that allows to deposit tokens on the Aave protocol and receive
  * a token which balance doesn't increase automatically, but uses an ever-increasing exchange rate.
  * @author BGD labs
  */
-abstract contract Stata4626Upgradable is ERC4626Upgradeable, IStata4626 {
+abstract contract ERC4626StataTokenUpgradable is ERC4626Upgradeable, IStata4626 {
   using Math for uint256;
 
   /// @custom:storage-location erc7201:aave-dao.storage.Stata4626
-  struct Stata4626Storage {
+  struct ERC4626StataTokenStorage {
     IERC20 _aToken;
   }
 
-  // keccak256(abi.encode(uint256(keccak256("aave-dao.storage.Stata4626")) - 1)) & ~bytes32(uint256(0xff))
-  bytes32 private constant Stata4626StorageLocation =
-    0x4865e395e8f896b2ca01e8489fd809975f6c70c69fd3d1cf5d2263a21a649200;
+  // keccak256(abi.encode(uint256(keccak256("aave-dao.storage.ERC4626StataToken")) - 1)) & ~bytes32(uint256(0xff))
+  bytes32 private constant ERC4626StataTokenStorageLocation =
+    0x55029d3f54709e547ed74b2fc842d93107ab1490ab7555dd9dd0bf6451101900;
 
-  function _getStata4626Storage() private pure returns (Stata4626Storage storage $) {
+  function _getERC4626StataTokenStorage()
+    private
+    pure
+    returns (ERC4626StataTokenStorage storage $)
+  {
     assembly {
-      $.slot := Stata4626StorageLocation
+      $.slot := ERC4626StataTokenStorageLocation
     }
   }
 
@@ -60,7 +64,7 @@ abstract contract Stata4626Upgradable is ERC4626Upgradeable, IStata4626 {
     IERC20 aTokenUnderlying = IERC20(IAToken(newAToken).UNDERLYING_ASSET_ADDRESS());
     __ERC4626_init(aTokenUnderlying);
 
-    Stata4626Storage storage $ = _getStata4626Storage();
+    ERC4626StataTokenStorage storage $ = _getERC4626StataTokenStorage();
     $._aToken = IERC20(newAToken);
 
     SafeERC20.forceApprove(aTokenUnderlying, address(POOL), type(uint256).max);
@@ -83,7 +87,7 @@ abstract contract Stata4626Upgradable is ERC4626Upgradeable, IStata4626 {
     bool depositToAave
   ) public returns (uint256) {
     // TODO: add tests
-    Stata4626Storage storage $ = _getStata4626Storage();
+    ERC4626StataTokenStorage storage $ = _getERC4626StataTokenStorage();
     IERC20Permit assetToDeposit = IERC20Permit(depositToAave ? asset() : address($._aToken));
 
     try
@@ -103,7 +107,7 @@ abstract contract Stata4626Upgradable is ERC4626Upgradeable, IStata4626 {
 
   ///@inheritdoc IStata4626
   function aToken() public view returns (IERC20) {
-    Stata4626Storage storage $ = _getStata4626Storage();
+    ERC4626StataTokenStorage storage $ = _getERC4626StataTokenStorage();
     return $._aToken;
   }
 
@@ -195,7 +199,7 @@ abstract contract Stata4626Upgradable is ERC4626Upgradeable, IStata4626 {
       SafeERC20.safeTransferFrom(IERC20(cachedAsset), caller, address(this), assets);
       POOL.deposit(cachedAsset, assets, address(this), 0);
     } else {
-      Stata4626Storage storage $ = _getStata4626Storage();
+      ERC4626StataTokenStorage storage $ = _getERC4626StataTokenStorage();
       SafeERC20.safeTransferFrom($._aToken, caller, address(this), assets);
     }
     _mint(receiver, shares);
@@ -234,7 +238,7 @@ abstract contract Stata4626Upgradable is ERC4626Upgradeable, IStata4626 {
     if (withdrawFromAave) {
       POOL.withdraw(asset(), assets, receiver);
     } else {
-      Stata4626Storage storage $ = _getStata4626Storage();
+      ERC4626StataTokenStorage storage $ = _getERC4626StataTokenStorage();
       SafeERC20.safeTransfer($._aToken, receiver, assets);
     }
 

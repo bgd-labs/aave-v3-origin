@@ -8,8 +8,8 @@ import {IERC20Metadata, IERC20} from 'openzeppelin-contracts/contracts/token/ERC
 
 import {AToken} from '../../../src/core/contracts/protocol/tokenization/AToken.sol';
 import {DataTypes} from '../../../src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {Math} from '../../../src/periphery/contracts/static-a-token/Stata4626Upgradable.sol';
-import {StataMerger} from '../../../src/periphery/contracts/static-a-token/StataMerger.sol'; // TODO: change import to isolate to 4626
+import {Math} from '../../../src/periphery/contracts/static-a-token/ERC4626StataTokenUpgradable.sol';
+import {StataTokenV2} from '../../../src/periphery/contracts/static-a-token/StataTokenV2.sol'; // TODO: change import to isolate to 4626
 import {SigUtils} from '../../utils/SigUtils.sol';
 import {BaseTest, TestnetERC20} from './TestBase.sol';
 import {IPool} from '../../../src/core/contracts/interfaces/IPool.sol';
@@ -27,7 +27,7 @@ contract Stata4626LMTest is BaseTest {
   function test_initializeShouldRevert() public {
     address impl = factory.STATIC_A_TOKEN_IMPL();
     vm.expectRevert(Initializable.InvalidInitialization.selector);
-    StataMerger(impl).initialize(A_TOKEN, 'hey', 'ho');
+    StataTokenV2(impl).initialize(A_TOKEN, 'hey', 'ho');
   }
 
   function test_getters() public view {

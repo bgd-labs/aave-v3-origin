@@ -11,7 +11,7 @@ import {TransparentUpgradeableProxy} from 'solidity-utils/contracts/transparent-
 import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/TransparentProxyFactory.sol';
 import {IPool} from '../../../src/core/contracts/interfaces/IPool.sol';
 import {StaticATokenFactory} from '../../../src/periphery/contracts/static-a-token/StaticATokenFactory.sol';
-import {StataMerger} from '../../../src/periphery/contracts/static-a-token/StataMerger.sol';
+import {StataTokenV2} from '../../../src/periphery/contracts/static-a-token/StataTokenV2.sol';
 import {IERC20AaveLM} from '../../../src/periphery/contracts/static-a-token/interfaces/IERC20AaveLM.sol';
 import {IAToken} from '../../../src/core/contracts/interfaces/IAToken.sol';
 import {TestnetProcedures, TestnetERC20} from '../../utils/TestnetProcedures.sol';
@@ -31,7 +31,7 @@ abstract contract BaseTest is TestnetProcedures {
   uint256 internal userPrivateKey;
   uint256 internal spenderPrivateKey;
 
-  StataMerger public staticATokenLM;
+  StataTokenV2 public staticATokenLM;
   address public proxyAdmin;
   ITransparentProxyFactory public proxyFactory;
   StaticATokenFactory public factory;
@@ -68,7 +68,7 @@ abstract contract BaseTest is TestnetProcedures {
     factory = StaticATokenFactory(report.staticATokenFactoryProxy);
     factory.createStaticATokens(POOL.getReservesList());
 
-    staticATokenLM = StataMerger(factory.getStaticAToken(UNDERLYING));
+    staticATokenLM = StataTokenV2(factory.getStaticAToken(UNDERLYING));
   }
 
   function _configureLM() internal {

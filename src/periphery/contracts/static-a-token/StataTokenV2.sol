@@ -6,22 +6,22 @@ import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/
 import {IRescuable, Rescuable} from 'solidity-utils/contracts/utils/Rescuable.sol';
 
 import {IACLManager} from '../../../core/contracts/interfaces/IACLManager.sol';
-import {ERC4626Upgradeable, Stata4626Upgradable, IPool} from './Stata4626Upgradable.sol';
+import {ERC4626Upgradeable, ERC4626StataTokenUpgradable, IPool} from './ERC4626StataTokenUpgradable.sol';
 import {ERC20AaveLMUpgradable, IRewardsController} from './ERC20AaveLMUpgradable.sol';
-import {IStataMerger} from './interfaces/IStataMerger.sol';
+import {IStataTokenV2} from './interfaces/IStataTokenV2.sol';
 
-contract StataMerger is
+contract StataTokenV2 is
   ERC20PermitUpgradeable,
   ERC20AaveLMUpgradable,
-  Stata4626Upgradable,
+  ERC4626StataTokenUpgradable,
   PausableUpgradeable,
   Rescuable,
-  IStataMerger
+  IStataTokenV2
 {
   constructor(
     IPool pool,
     IRewardsController rewardsController
-  ) ERC20AaveLMUpgradable(rewardsController) Stata4626Upgradable(pool) {}
+  ) ERC20AaveLMUpgradable(rewardsController) ERC4626StataTokenUpgradable(pool) {}
   modifier onlyPauseGuardian() {
     if (!canPause(_msgSender())) revert OnlyPauseGuardian(_msgSender());
     _;
@@ -39,7 +39,7 @@ contract StataMerger is
     __Pausable_init();
   }
 
-  ///@inheritdoc IStataMerger
+  ///@inheritdoc IStataTokenV2
   function setPaused(bool paused) external onlyPauseGuardian {
     if (paused) _pause();
     else _unpause();
@@ -50,7 +50,7 @@ contract StataMerger is
     return POOL_ADDRESSES_PROVIDER.getACLAdmin();
   }
 
-  ///@inheritdoc IStataMerger
+  ///@inheritdoc IStataTokenV2
   function canPause(address actor) public view returns (bool) {
     return IACLManager(POOL_ADDRESSES_PROVIDER.getACLManager()).isEmergencyAdmin(actor);
   }

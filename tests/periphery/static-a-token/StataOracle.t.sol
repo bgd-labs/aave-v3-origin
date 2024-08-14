@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {StataOracle} from '../../../src/periphery/contracts/static-a-token/StataOracle.sol';
-import {StataMerger} from '../../../src/periphery/contracts/static-a-token/StataMerger.sol';
+import {StataTokenV2} from '../../../src/periphery/contracts/static-a-token/StataTokenV2.sol';
 import {BaseTest} from './TestBase.sol';
 import {IPool} from '../../../src/core/contracts/interfaces/IPool.sol';
 
@@ -33,13 +33,13 @@ contract StataOracleTest is BaseTest {
       address staticAToken = staticATokens[i];
       uint256 stataPrice = stataPrices[i];
 
-      address underlying = StataMerger(staticAToken).asset();
+      address underlying = StataTokenV2(staticAToken).asset();
       uint256 underlyingPrice = contracts.aaveOracle.getAssetPrice(underlying);
 
       assertGe(stataPrice, underlyingPrice);
       assertEq(
         stataPrice,
-        (underlyingPrice * StataMerger(staticAToken).convertToAssets(1e18)) / 1e18
+        (underlyingPrice * StataTokenV2(staticAToken).convertToAssets(1e18)) / 1e18
       );
     }
   }

@@ -1,7 +1,7 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface IStataMerger {
+interface IStataTokenV2 {
   /**
    * @notice Checks if the passed actor is permissioned emergency admin.
    * @param actor The reward to claim
