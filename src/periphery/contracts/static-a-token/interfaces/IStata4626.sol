@@ -10,6 +10,8 @@ interface IStata4626 {
     bytes32 s;
   }
 
+  error PoolAddressMismatch(address pool);
+
   error StaticATokenInvalidZeroShares();
 
   error OnlyPauseGuardian(address caller);

@@ -47,7 +47,8 @@ contract StaticATokenFactory is Initializable, IStaticATokenFactory {
       address cachedStaticAToken = _underlyingToStaticAToken[underlyings[i]];
       if (cachedStaticAToken == address(0)) {
         DataTypes.ReserveDataLegacy memory reserveData = POOL.getReserveData(underlyings[i]);
-        require(reserveData.aTokenAddress != address(0), 'UNDERLYING_NOT_LISTED');
+        if (reserveData.aTokenAddress == address(0))
+          revert NotListedUnderlying(reserveData.aTokenAddress);
         bytes memory symbol = abi.encodePacked(
           'stat',
           IERC20Metadata(reserveData.aTokenAddress).symbol()
