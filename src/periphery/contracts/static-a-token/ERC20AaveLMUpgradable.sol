@@ -14,7 +14,7 @@ import {IERC20AaveLM} from './interfaces/IERC20AaveLM.sol';
  * @notice Wrapper smart contract that supports tracking and claiming liquidity mining rewards from the Aave system.
  * @author BGD labs
  */
-contract ERC20AaveLMUpgradable is ERC20Upgradeable, IERC20AaveLM {
+abstract contract ERC20AaveLMUpgradable is ERC20Upgradeable, IERC20AaveLM {
   using SafeCast for uint256;
 
   /// @custom:storage-location erc7201:aave-dao.storage.ERC20AaveLM
