@@ -44,18 +44,12 @@ abstract contract Stata4626Upgradable is ERC4626Upgradeable, IStata4626 {
     POOL_ADDRESSES_PROVIDER = pool.ADDRESSES_PROVIDER();
   }
 
-  function __Stata4626_init(
-    address newAToken,
-    string calldata staticATokenName
-  ) internal onlyInitializing {
+  function __Stata4626_init(address newAToken) internal onlyInitializing {
     // TODO: maybe to do some movements here
-    __Stata4626_init_unchained(newAToken, staticATokenName);
+    __Stata4626_init_unchained(newAToken);
   }
 
-  function __Stata4626_init_unchained(
-    address newAToken,
-    string calldata staticATokenName
-  ) internal onlyInitializing {
+  function __Stata4626_init_unchained(address newAToken) internal onlyInitializing {
     require(IAToken(newAToken).POOL() == address(POOL));
 
     IERC20 aTokenUnderlying = IERC20(IAToken(newAToken).UNDERLYING_ASSET_ADDRESS());
