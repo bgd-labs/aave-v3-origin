@@ -21,7 +21,9 @@ contract StataTokenV2 is
   constructor(
     IPool pool,
     IRewardsController rewardsController
-  ) ERC20AaveLMUpgradeable(rewardsController) ERC4626StataTokenUpgradeable(pool) {}
+  ) ERC20AaveLMUpgradeable(rewardsController) ERC4626StataTokenUpgradeable(pool) {
+    _disableInitializers();
+  }
   modifier onlyPauseGuardian() {
     if (!canPause(_msgSender())) revert OnlyPauseGuardian(_msgSender());
     _;

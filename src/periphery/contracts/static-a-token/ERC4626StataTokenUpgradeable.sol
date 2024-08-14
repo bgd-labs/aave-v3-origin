@@ -46,7 +46,6 @@ abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IStata4626
   IPoolAddressesProvider public immutable POOL_ADDRESSES_PROVIDER;
 
   constructor(IPool pool) {
-    _disableInitializers();
     POOL = pool;
     POOL_ADDRESSES_PROVIDER = pool.ADDRESSES_PROVIDER();
   }
