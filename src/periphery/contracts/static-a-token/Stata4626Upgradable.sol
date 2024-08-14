@@ -84,9 +84,11 @@ abstract contract Stata4626Upgradable is ERC4626Upgradeable, IStata4626 {
   ) public returns (uint256) {
     // TODO: add tests
     Stata4626Storage storage $ = _getStata4626Storage();
-    IERC20Permit asset = IERC20Permit(depositToAave ? asset() : address($._aToken));
+    IERC20Permit assetToDeposit = IERC20Permit(depositToAave ? asset() : address($._aToken));
 
-    try asset.permit(_msgSender(), address(this), assets, deadline, sig.v, sig.r, sig.s) {} catch {}
+    try
+      assetToDeposit.permit(_msgSender(), address(this), assets, deadline, sig.v, sig.r, sig.s)
+    {} catch {}
 
     return depositToAave ? deposit(assets, receiver) : depositATokens(assets, receiver);
   }
@@ -166,6 +168,7 @@ abstract contract Stata4626Upgradable is ERC4626Upgradeable, IStata4626 {
   function latestAnswer() external view returns (int256) {
     uint256 aTokenUnderlyingAssetPrice = IAaveOracle(POOL_ADDRESSES_PROVIDER.getPriceOracle())
       .getAssetPrice(asset());
+    // aTokenUnderlyingAssetPrice * rate / RAY
     return int256(aTokenUnderlyingAssetPrice.mulDiv(_rate(), RAY, Math.Rounding.Floor));
   }
 
