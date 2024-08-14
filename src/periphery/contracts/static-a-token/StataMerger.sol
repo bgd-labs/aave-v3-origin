@@ -66,7 +66,8 @@ contract StataMerger is
     super._claimRewardsOnBehalf(onBehalfOf, receiver, rewards);
   }
 
-  // TODO: double check
+  // @notice to merge inheritance with ERC20AaveLMUpgradable properly we put
+  // `whenNotPaused` here instead of using ERC20PausableUpgradeable
   function _update(
     address from,
     address to,
