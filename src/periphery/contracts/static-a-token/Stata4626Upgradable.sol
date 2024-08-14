@@ -3,6 +3,7 @@ pragma solidity ^0.8.17;
 
 import {ERC4626Upgradeable, Math, IERC4626} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC4626Upgradeable.sol';
 import {SafeERC20, IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol';
+import {IERC20Permit} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol';
 
 import {IPool, IPoolAddressesProvider} from '../../../core/contracts/interfaces/IPool.sol';
 import {IAaveOracle} from '../../../core/contracts/interfaces/IAaveOracle.sol';
@@ -69,6 +70,22 @@ abstract contract Stata4626Upgradable is ERC4626Upgradeable, IStata4626 {
     _deposit(_msgSender(), receiver, assets, shares, false);
 
     return shares;
+  }
+
+  ///@inheritdoc IStata4626
+  function depositWithPermit(
+    uint256 assets,
+    address receiver,
+    uint256 deadline,
+    SignatureParams memory sig,
+    bool depositToAave
+  ) public returns (uint256) {
+    Stata4626Storage storage $ = _getStata4626Storage();
+    IERC20Permit asset = IERC20Permit(depositToAave ? asset() : address($._aToken));
+
+    try asset.permit(_msgSender(), address(this), assets, deadline, sig.v, sig.r, sig.s) {} catch {}
+
+    return depositToAave ? deposit(assets, receiver) : depositATokens(assets, receiver);
   }
 
   ///@inheritdoc IStata4626
