@@ -21,7 +21,7 @@ import {IERC4626StataToken} from './interfaces/IERC4626StataToken.sol';
 abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IERC4626StataToken {
   using Math for uint256;
 
-  /// @custom:storage-location erc7201:aave-dao.storage.Stata4626
+  /// @custom:storage-location erc7201:aave-dao.storage.ERC4626StataToken
   struct ERC4626StataTokenStorage {
     IERC20 _aToken;
   }
@@ -50,23 +50,35 @@ abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IERC4626St
     POOL_ADDRESSES_PROVIDER = pool.ADDRESSES_PROVIDER();
   }
 
-  function __ERC4626StataToken_init(address newAToken) internal onlyInitializing {
-    // TODO: maybe to do some movements here
-    __ERC4626StataToken_init_unchained(newAToken);
+  function __ERC4626StataToken_init(
+    address newAToken,
+    string calldata staticATokenName,
+    string calldata staticATokenSymbol
+  ) internal onlyInitializing {
+    IERC20 aTokenUnderlying = __ERC4626StataToken_init_unchained(newAToken);
+
+    /// @notice __ERC4626_init doesn't init the ERC20Upgradeable, but following the init
+    /// procedures, this function should initialize everything required for this contract
+    /// to be completely initialized, including the inheritance chain
+    __ERC4626_init_unchained(aTokenUnderlying);
+    __ERC20_init_unchained(staticATokenName, staticATokenSymbol);
   }
 
-  function __ERC4626StataToken_init_unchained(address newAToken) internal onlyInitializing {
+  function __ERC4626StataToken_init_unchained(
+    address newAToken
+  ) internal onlyInitializing returns (IERC20) {
     // sanity check, to be sure that we support that version of the aToken
     address poolOfAToken = IAToken(newAToken).POOL();
     if (poolOfAToken != address(POOL)) revert PoolAddressMismatch(poolOfAToken);
 
     IERC20 aTokenUnderlying = IERC20(IAToken(newAToken).UNDERLYING_ASSET_ADDRESS());
-    __ERC4626_init(aTokenUnderlying);
 
     ERC4626StataTokenStorage storage $ = _getERC4626StataTokenStorage();
     $._aToken = IERC20(newAToken);
 
     SafeERC20.forceApprove(aTokenUnderlying, address(POOL), type(uint256).max);
+
+    return aTokenUnderlying;
   }
 
   ///@inheritdoc IERC4626StataToken

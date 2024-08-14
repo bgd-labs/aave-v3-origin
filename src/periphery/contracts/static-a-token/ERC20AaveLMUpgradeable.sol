@@ -41,8 +41,13 @@ abstract contract ERC20AaveLMUpgradeable is ERC20Upgradeable, IERC20AaveLM {
     INCENTIVES_CONTROLLER = rewardsController;
   }
 
-  function __ERC20AaveLM_init(address referenceAsset_) internal onlyInitializing {
+  function __ERC20AaveLM_init(
+    address referenceAsset_,
+    string calldata staticATokenName,
+    string calldata staticATokenSymbol
+  ) internal onlyInitializing {
     __ERC20AaveLM_init_unchained(referenceAsset_);
+    __ERC20_init_unchained(staticATokenName, staticATokenSymbol);
   }
   function __ERC20AaveLM_init_unchained(address referenceAsset_) internal onlyInitializing {
     ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();
