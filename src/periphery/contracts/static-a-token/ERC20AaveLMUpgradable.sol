@@ -10,10 +10,8 @@ import {IRewardsController} from '../rewards/interfaces/IRewardsController.sol';
 import {IERC20AaveLM} from './interfaces/IERC20AaveLM.sol';
 
 /**
- * @title Stata4626LM
- * @notice Wrapper smart contract that allows to deposit tokens on the Aave protocol and receive
- * a token which balance doesn't increase automatically, but uses an ever-increasing exchange rate.
- * It supports claiming liquidity mining rewards from the Aave system.
+ * @title ERC20AaveLMUpgradable
+ * @notice Wrapper smart contract that supports tracking and claiming liquidity mining rewards from the Aave system.
  * @author BGD labs
  */
 contract ERC20AaveLMUpgradable is ERC20Upgradeable, IERC20AaveLM {
@@ -255,7 +253,6 @@ contract ERC20AaveLMUpgradable is ERC20Upgradeable, IERC20AaveLM {
     address receiver,
     address[] memory rewards
   ) internal virtual {
-    // TODO: add whenNotPaused override into the joining contract
     for (uint256 i = 0; i < rewards.length; i++) {
       if (address(rewards[i]) == address(0)) {
         continue;
