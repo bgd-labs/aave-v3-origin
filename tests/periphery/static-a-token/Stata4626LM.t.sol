@@ -36,8 +36,8 @@ contract Stata4626LMTest is BaseTest {
     assertEq(staticATokenLM.name(), 'Static Aave Local WETH');
     assertEq(staticATokenLM.symbol(), 'stataLocWETH');
 
-    IERC20 aToken = staticATokenLM.aToken();
-    assertEq(address(aToken), A_TOKEN);
+    address referenceAsset = staticATokenLM.getReferenceAsset();
+    assertEq(referenceAsset, A_TOKEN);
 
     address underlyingAddress = address(staticATokenLM.asset());
     assertEq(underlyingAddress, UNDERLYING);

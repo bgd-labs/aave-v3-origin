@@ -30,7 +30,7 @@ contract StataMerger is
     address newAToken,
     string calldata staticATokenName,
     string calldata staticATokenSymbol
-  ) external {
+  ) external initializer {
     __ERC20_init(staticATokenName, staticATokenSymbol);
     __ERC20Permit_init(staticATokenName);
     __ERC20AaveLM_init(newAToken);
