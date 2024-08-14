@@ -10,14 +10,14 @@ import {PullRewardsTransferStrategy} from '../../../src/periphery/contracts/rewa
 import {RewardsDataTypes} from '../../../src/periphery/contracts/rewards/libraries/RewardsDataTypes.sol';
 import {ITransferStrategyBase} from '../../../src/periphery/contracts/rewards/interfaces/ITransferStrategyBase.sol';
 import {IEACAggregatorProxy} from '../../../src/periphery/contracts/misc/interfaces/IEACAggregatorProxy.sol';
-import {IStata4626} from '../../../src/periphery/contracts/static-a-token/interfaces/IStata4626.sol';
+import {IERC4626StataToken} from '../../../src/periphery/contracts/static-a-token/interfaces/IERC4626StataToken.sol';
 import {SigUtils} from '../../utils/SigUtils.sol';
 import {BaseTest, TestnetERC20} from './TestBase.sol';
 
 contract StataPausableTest is BaseTest {
   function test_setPaused_shouldRevertForInvalidCaller(address actor) external {
     vm.assume(actor != poolAdmin && actor != proxyAdmin);
-    vm.expectRevert(abi.encodeWithSelector(IStata4626.OnlyPauseGuardian.selector, actor));
+    vm.expectRevert(abi.encodeWithSelector(IERC4626StataToken.OnlyPauseGuardian.selector, actor));
     _setPaused(actor, true);
   }
 

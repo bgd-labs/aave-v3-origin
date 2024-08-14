@@ -3,7 +3,7 @@ pragma solidity ^0.8.10;
 
 import {IERC20} from 'openzeppelin-contracts/contracts/interfaces/IERC20.sol';
 
-interface IStata4626 {
+interface IERC4626StataToken {
   struct SignatureParams {
     uint8 v;
     bytes32 r;

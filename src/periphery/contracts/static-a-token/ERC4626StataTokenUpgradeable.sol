@@ -10,7 +10,7 @@ import {IAaveOracle} from '../../../core/contracts/interfaces/IAaveOracle.sol';
 import {DataTypes, ReserveConfiguration} from '../../../core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 
 import {IAToken} from './interfaces/IAToken.sol';
-import {IStata4626} from './interfaces/IStata4626.sol';
+import {IERC4626StataToken} from './interfaces/IERC4626StataToken.sol';
 
 /**
  * @title ERC4626StataTokenUpgradeable.sol.sol
@@ -18,7 +18,7 @@ import {IStata4626} from './interfaces/IStata4626.sol';
  * a token which balance doesn't increase automatically, but uses an ever-increasing exchange rate.
  * @author BGD labs
  */
-abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IStata4626 {
+abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IERC4626StataToken {
   using Math for uint256;
 
   /// @custom:storage-location erc7201:aave-dao.storage.Stata4626
@@ -69,7 +69,7 @@ abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IStata4626
     SafeERC20.forceApprove(aTokenUnderlying, address(POOL), type(uint256).max);
   }
 
-  ///@inheritdoc IStata4626
+  ///@inheritdoc IERC4626StataToken
   function depositATokens(uint256 assets, address receiver) public returns (uint256) {
     uint256 shares = previewDeposit(assets);
     _deposit(_msgSender(), receiver, assets, shares, false);
@@ -77,7 +77,7 @@ abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IStata4626
     return shares;
   }
 
-  ///@inheritdoc IStata4626
+  ///@inheritdoc IERC4626StataToken
   function depositWithPermit(
     uint256 assets,
     address receiver,
@@ -96,7 +96,7 @@ abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IStata4626
     return depositToAave ? deposit(assets, receiver) : depositATokens(assets, receiver);
   }
 
-  ///@inheritdoc IStata4626
+  ///@inheritdoc IERC4626StataToken
   function redeemATokens(uint256 shares, address receiver, address owner) public returns (uint256) {
     uint256 assets = previewRedeem(shares);
     _withdraw(_msgSender(), receiver, owner, assets, shares, false);
@@ -104,7 +104,7 @@ abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IStata4626
     return assets;
   }
 
-  ///@inheritdoc IStata4626
+  ///@inheritdoc IERC4626StataToken
   function aToken() public view returns (IERC20) {
     ERC4626StataTokenStorage storage $ = _getERC4626StataTokenStorage();
     return $._aToken;
@@ -167,7 +167,7 @@ abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IStata4626
     return currentSupply > supplyCap ? 0 : supplyCap - currentSupply;
   }
 
-  ///@inheritdoc IStata4626
+  ///@inheritdoc IERC4626StataToken
   function latestAnswer() external view returns (int256) {
     uint256 aTokenUnderlyingAssetPrice = IAaveOracle(POOL_ADDRESSES_PROVIDER.getPriceOracle())
       .getAssetPrice(asset());
