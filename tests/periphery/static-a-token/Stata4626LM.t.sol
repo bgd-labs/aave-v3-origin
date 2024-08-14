@@ -8,15 +8,13 @@ import {IERC20Metadata, IERC20} from 'openzeppelin-contracts/contracts/token/ERC
 
 import {AToken} from '../../../src/core/contracts/protocol/tokenization/AToken.sol';
 import {DataTypes} from '../../../src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {RayMathExplicitRounding} from '../../../src/periphery/contracts/libraries/RayMathExplicitRounding.sol';
-import {StataMerger} from '../../../src/periphery/contracts/static-a-token/StataMerger.sol';
+import {Math} from '../../../src/periphery/contracts/static-a-token/Stata4626Upgradable.sol';
+import {StataMerger} from '../../../src/periphery/contracts/static-a-token/StataMerger.sol'; // TODO: change import to isolate to 4626
 import {SigUtils} from '../../utils/SigUtils.sol';
 import {BaseTest, TestnetERC20} from './TestBase.sol';
 import {IPool} from '../../../src/core/contracts/interfaces/IPool.sol';
 
 contract Stata4626LMTest is BaseTest {
-  using RayMathExplicitRounding for uint256;
-
   function setUp() public override {
     super.setUp();
 
@@ -239,8 +237,10 @@ contract Stata4626LMTest is BaseTest {
       50_000 *
         (10 ** IERC20Metadata(UNDERLYING).decimals()) -
         (IERC20Metadata(A_TOKEN).totalSupply() +
-          uint256(reserveData.accruedToTreasury).rayMulRoundUp(
-            POOL.getReserveNormalizedIncome(UNDERLYING)
+          Math.mulDiv(
+            reserveData.accruedToTreasury,
+            POOL.getReserveNormalizedIncome(UNDERLYING),
+            1e27
           ))
     );
   }
