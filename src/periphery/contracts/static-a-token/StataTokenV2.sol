@@ -34,15 +34,10 @@ contract StataTokenV2 is
     string calldata staticATokenName,
     string calldata staticATokenSymbol
   ) external initializer {
-    /// @notice __ERC4626StataToken_init will also init ERC20
-    __ERC4626StataToken_init(aToken, staticATokenName, staticATokenSymbol);
-
+    __ERC20_init(staticATokenName, staticATokenSymbol);
     __ERC20Permit_init(staticATokenName);
-
-    /// @notice using init_unchained because we have already initialized ERC20
-    /// with __ERC4626StataToken_init, so we want only to init ERC20AaveLM
     __ERC20AaveLM_init_unchained(aToken);
-
+    __ERC4626StataToken_init(aToken);
     __Pausable_init();
   }
 

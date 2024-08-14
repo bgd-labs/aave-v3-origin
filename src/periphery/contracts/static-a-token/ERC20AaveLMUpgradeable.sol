@@ -11,7 +11,8 @@ import {IERC20AaveLM} from './interfaces/IERC20AaveLM.sol';
 
 /**
  * @title ERC20AaveLMUpgradeable.sol
- * @notice Wrapper smart contract that supports tracking and claiming liquidity mining rewards from the Aave system.
+ * @notice Wrapper smart contract that supports tracking and claiming liquidity mining rewards from the Aave system
+ * @dev ERC20 extension, so ERC20 initialization should be done by the children contract/s
  * @author BGD labs
  */
 abstract contract ERC20AaveLMUpgradeable is ERC20Upgradeable, IERC20AaveLM {
@@ -41,13 +42,8 @@ abstract contract ERC20AaveLMUpgradeable is ERC20Upgradeable, IERC20AaveLM {
     INCENTIVES_CONTROLLER = rewardsController;
   }
 
-  function __ERC20AaveLM_init(
-    address referenceAsset_,
-    string calldata staticATokenName,
-    string calldata staticATokenSymbol
-  ) internal onlyInitializing {
+  function __ERC20AaveLM_init(address referenceAsset_) internal onlyInitializing {
     __ERC20AaveLM_init_unchained(referenceAsset_);
-    __ERC20_init_unchained(staticATokenName, staticATokenSymbol);
   }
   function __ERC20AaveLM_init_unchained(address referenceAsset_) internal onlyInitializing {
     ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();
