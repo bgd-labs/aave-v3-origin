@@ -50,12 +50,12 @@ abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IERC4626St
     POOL_ADDRESSES_PROVIDER = pool.ADDRESSES_PROVIDER();
   }
 
-  function __Stata4626_init(address newAToken) internal onlyInitializing {
+  function __ERC4626StataToken_init(address newAToken) internal onlyInitializing {
     // TODO: maybe to do some movements here
-    __Stata4626_init_unchained(newAToken);
+    __ERC4626StataToken_init_unchained(newAToken);
   }
 
-  function __Stata4626_init_unchained(address newAToken) internal onlyInitializing {
+  function __ERC4626StataToken_init_unchained(address newAToken) internal onlyInitializing {
     // sanity check, to be sure that we support that version of the aToken
     address poolOfAToken = IAToken(newAToken).POOL();
     if (poolOfAToken != address(POOL)) revert PoolAddressMismatch(poolOfAToken);

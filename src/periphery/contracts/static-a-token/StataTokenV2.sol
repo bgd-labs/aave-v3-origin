@@ -37,7 +37,7 @@ contract StataTokenV2 is
     __ERC20_init(staticATokenName, staticATokenSymbol);
     __ERC20Permit_init(staticATokenName);
     __ERC20AaveLM_init(aToken);
-    __Stata4626_init(aToken);
+    __ERC4626StataToken_init(aToken);
     __Pausable_init();
   }
 
