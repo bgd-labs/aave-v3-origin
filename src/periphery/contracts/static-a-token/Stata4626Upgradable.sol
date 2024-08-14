@@ -35,6 +35,8 @@ abstract contract Stata4626Upgradable is ERC4626Upgradeable, IStata4626 {
     }
   }
 
+  uint256 public constant RAY = 1e27;
+
   IPool public immutable POOL;
   IPoolAddressesProvider public immutable POOL_ADDRESSES_PROVIDER;
 
@@ -134,12 +136,9 @@ abstract contract Stata4626Upgradable is ERC4626Upgradeable, IStata4626 {
     // if no supply cap deposit is unlimited
     if (supplyCap == 0) return type(uint256).max;
 
-    // TODO: revalidate
     // return remaining supply cap margin
-    //    uint256 currentSupply = (IAToken(reserveData.aTokenAddress).scaledTotalSupply() +
-    //      reserveData.accruedToTreasury).rayMulRoundUp(_rate());
     uint256 currentSupply = (IAToken(reserveData.aTokenAddress).scaledTotalSupply() +
-      reserveData.accruedToTreasury).mulDiv(_rate(), 1e27, Math.Rounding.Ceil);
+      reserveData.accruedToTreasury).mulDiv(_rate(), RAY, Math.Rounding.Ceil);
     return currentSupply > supplyCap ? 0 : supplyCap - currentSupply;
   }
 
@@ -147,7 +146,7 @@ abstract contract Stata4626Upgradable is ERC4626Upgradeable, IStata4626 {
   function latestAnswer() external view returns (int256) {
     uint256 aTokenUnderlyingAssetPrice = IAaveOracle(POOL_ADDRESSES_PROVIDER.getPriceOracle())
       .getAssetPrice(asset());
-    return int256(aTokenUnderlyingAssetPrice.mulDiv(_rate(), 1e27, Math.Rounding.Floor)); // TODO: fix others
+    return int256(aTokenUnderlyingAssetPrice.mulDiv(_rate(), RAY, Math.Rounding.Floor)); // TODO: fix others
   }
 
   function _deposit(
@@ -234,7 +233,7 @@ abstract contract Stata4626Upgradable is ERC4626Upgradeable, IStata4626 {
     Math.Rounding rounding
   ) internal view virtual override returns (uint256) {
     // * @notice assets * RAY / exchangeRate
-    return assets.mulDiv(1e27, _rate(), rounding); // TODO: fix others
+    return assets.mulDiv(RAY, _rate(), rounding);
   }
 
   function _convertToAssets(
@@ -242,7 +241,7 @@ abstract contract Stata4626Upgradable is ERC4626Upgradeable, IStata4626 {
     Math.Rounding rounding
   ) internal view virtual override returns (uint256) {
     // * @notice share * exchangeRate / RAY
-    return shares.mulDiv(_rate(), 1e27, rounding); // TODO: fix others
+    return shares.mulDiv(_rate(), RAY, rounding);
   }
 
   function _rate() internal view returns (uint256) {
