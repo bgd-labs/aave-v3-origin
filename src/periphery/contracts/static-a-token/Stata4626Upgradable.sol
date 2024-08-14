@@ -168,7 +168,7 @@ abstract contract Stata4626Upgradable is ERC4626Upgradeable, IStata4626 {
   function latestAnswer() external view returns (int256) {
     uint256 aTokenUnderlyingAssetPrice = IAaveOracle(POOL_ADDRESSES_PROVIDER.getPriceOracle())
       .getAssetPrice(asset());
-    // aTokenUnderlyingAssetPrice * rate / RAY
+    // @notice aTokenUnderlyingAssetPrice * rate / RAY
     return int256(aTokenUnderlyingAssetPrice.mulDiv(_rate(), RAY, Math.Rounding.Floor));
   }
 
