@@ -11,7 +11,8 @@ import {IERC20AaveLM} from './interfaces/IERC20AaveLM.sol';
 
 /**
  * @title ERC20AaveLMUpgradeable.sol
- * @notice Wrapper smart contract that supports tracking and claiming liquidity mining rewards from the Aave system.
+ * @notice Wrapper smart contract that supports tracking and claiming liquidity mining rewards from the Aave system
+ * @dev ERC20 extension, so ERC20 initialization should be done by the children contract/s
  * @author BGD labs
  */
 abstract contract ERC20AaveLMUpgradeable is ERC20Upgradeable, IERC20AaveLM {

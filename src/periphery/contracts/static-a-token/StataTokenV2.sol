@@ -58,6 +58,8 @@ contract StataTokenV2 is
   }
 
   function decimals() public view override(ERC20Upgradeable, ERC4626Upgradeable) returns (uint8) {
+    /// @notice The initialization of ERC4626Upgradeable already assures that decimal are
+    /// the same as the underlying asset of the StataTokenV2, e.g. decimals of WETH for stataWETH
     return ERC4626Upgradeable.decimals();
   }
 

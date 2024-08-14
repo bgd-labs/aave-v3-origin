@@ -16,12 +16,13 @@ import {IERC4626StataToken} from './interfaces/IERC4626StataToken.sol';
  * @title ERC4626StataTokenUpgradeable.sol.sol
  * @notice Wrapper smart contract that allows to deposit tokens on the Aave protocol and receive
  * a token which balance doesn't increase automatically, but uses an ever-increasing exchange rate.
+ * @dev ERC20 extension, so ERC20 initialization should be done by the children contract/s
  * @author BGD labs
  */
 abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IERC4626StataToken {
   using Math for uint256;
 
-  /// @custom:storage-location erc7201:aave-dao.storage.Stata4626
+  /// @custom:storage-location erc7201:aave-dao.storage.ERC4626StataToken
   struct ERC4626StataTokenStorage {
     IERC20 _aToken;
   }
@@ -51,22 +52,25 @@ abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IERC4626St
   }
 
   function __ERC4626StataToken_init(address newAToken) internal onlyInitializing {
-    // TODO: maybe to do some movements here
-    __ERC4626StataToken_init_unchained(newAToken);
+    IERC20 aTokenUnderlying = __ERC4626StataToken_init_unchained(newAToken);
+    __ERC4626_init_unchained(aTokenUnderlying);
   }
 
-  function __ERC4626StataToken_init_unchained(address newAToken) internal onlyInitializing {
+  function __ERC4626StataToken_init_unchained(
+    address newAToken
+  ) internal onlyInitializing returns (IERC20) {
     // sanity check, to be sure that we support that version of the aToken
     address poolOfAToken = IAToken(newAToken).POOL();
     if (poolOfAToken != address(POOL)) revert PoolAddressMismatch(poolOfAToken);
 
     IERC20 aTokenUnderlying = IERC20(IAToken(newAToken).UNDERLYING_ASSET_ADDRESS());
-    __ERC4626_init(aTokenUnderlying);
 
     ERC4626StataTokenStorage storage $ = _getERC4626StataTokenStorage();
     $._aToken = IERC20(newAToken);
 
     SafeERC20.forceApprove(aTokenUnderlying, address(POOL), type(uint256).max);
+
+    return aTokenUnderlying;
   }
 
   ///@inheritdoc IERC4626StataToken
