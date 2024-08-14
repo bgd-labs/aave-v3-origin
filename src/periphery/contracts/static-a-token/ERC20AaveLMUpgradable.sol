@@ -29,7 +29,7 @@ contract ERC20AaveLMUpgradable is ERC20Upgradeable, IERC20AaveLM {
 
   // keccak256(abi.encode(uint256(keccak256("aave-dao.storage.ERC20AaveLM")) - 1)) & ~bytes32(uint256(0xff))
   bytes32 private constant ERC20AaveLMStorageLocation =
-    0x4a43e5c82db1d4c294eb6c47f1b5f92e6755a2055d3e0d4bb07e80af15cd9d00; // TODO: regenerate
+    0x4fad66563f105be0bff96185c9058c4934b504d3ba15ca31e86294f0b01fd200;
 
   function _getERC20AaveLMStorage() private pure returns (ERC20AaveLMStorage storage $) {
     assembly {

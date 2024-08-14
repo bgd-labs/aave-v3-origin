@@ -12,7 +12,7 @@ import {IAToken} from './interfaces/IAToken.sol';
 import {IStata4626} from './interfaces/IStata4626.sol';
 
 /**
- * @title Stata4626
+ * @title Stata4626Upgradable
  * @notice Wrapper smart contract that allows to deposit tokens on the Aave protocol and receive
  * a token which balance doesn't increase automatically, but uses an ever-increasing exchange rate.
  * @author BGD labs
