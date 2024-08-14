@@ -6,14 +6,14 @@ import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/
 import {IRescuable, Rescuable} from 'solidity-utils/contracts/utils/Rescuable.sol';
 
 import {IACLManager} from '../../../core/contracts/interfaces/IACLManager.sol';
-import {ERC4626Upgradeable, ERC4626StataTokenUpgradable, IPool} from './ERC4626StataTokenUpgradable.sol';
-import {ERC20AaveLMUpgradable, IRewardsController} from './ERC20AaveLMUpgradable.sol';
+import {ERC4626Upgradeable, ERC4626StataTokenUpgradeable, IPool} from './ERC4626StataTokenUpgradeable.sol';
+import {ERC20AaveLMUpgradeable, IRewardsController} from './ERC20AaveLMUpgradeable.sol';
 import {IStataTokenV2} from './interfaces/IStataTokenV2.sol';
 
 contract StataTokenV2 is
   ERC20PermitUpgradeable,
-  ERC20AaveLMUpgradable,
-  ERC4626StataTokenUpgradable,
+  ERC20AaveLMUpgradeable,
+  ERC4626StataTokenUpgradeable,
   PausableUpgradeable,
   Rescuable,
   IStataTokenV2
@@ -21,7 +21,7 @@ contract StataTokenV2 is
   constructor(
     IPool pool,
     IRewardsController rewardsController
-  ) ERC20AaveLMUpgradable(rewardsController) ERC4626StataTokenUpgradable(pool) {}
+  ) ERC20AaveLMUpgradeable(rewardsController) ERC4626StataTokenUpgradeable(pool) {}
   modifier onlyPauseGuardian() {
     if (!canPause(_msgSender())) revert OnlyPauseGuardian(_msgSender());
     _;
@@ -67,13 +67,13 @@ contract StataTokenV2 is
     super._claimRewardsOnBehalf(onBehalfOf, receiver, rewards);
   }
 
-  // @notice to merge inheritance with ERC20AaveLMUpgradable properly we put
+  // @notice to merge inheritance with ERC20AaveLMUpgradeable.sol properly we put
   // `whenNotPaused` here instead of using ERC20PausableUpgradeable
   function _update(
     address from,
     address to,
     uint256 amount
-  ) internal virtual override(ERC20AaveLMUpgradable, ERC20Upgradeable) whenNotPaused {
-    ERC20AaveLMUpgradable._update(from, to, amount);
+  ) internal virtual override(ERC20AaveLMUpgradeable, ERC20Upgradeable) whenNotPaused {
+    ERC20AaveLMUpgradeable._update(from, to, amount);
   }
 }

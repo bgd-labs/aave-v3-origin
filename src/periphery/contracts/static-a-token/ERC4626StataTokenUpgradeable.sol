@@ -13,12 +13,12 @@ import {IAToken} from './interfaces/IAToken.sol';
 import {IStata4626} from './interfaces/IStata4626.sol';
 
 /**
- * @title ERC4626StataTokenUpgradable.sol
+ * @title ERC4626StataTokenUpgradeable.sol.sol
  * @notice Wrapper smart contract that allows to deposit tokens on the Aave protocol and receive
  * a token which balance doesn't increase automatically, but uses an ever-increasing exchange rate.
  * @author BGD labs
  */
-abstract contract ERC4626StataTokenUpgradable is ERC4626Upgradeable, IStata4626 {
+abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IStata4626 {
   using Math for uint256;
 
   /// @custom:storage-location erc7201:aave-dao.storage.Stata4626

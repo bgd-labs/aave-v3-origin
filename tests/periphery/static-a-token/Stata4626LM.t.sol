@@ -8,7 +8,7 @@ import {IERC20Metadata, IERC20} from 'openzeppelin-contracts/contracts/token/ERC
 
 import {AToken} from '../../../src/core/contracts/protocol/tokenization/AToken.sol';
 import {DataTypes} from '../../../src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {Math} from '../../../src/periphery/contracts/static-a-token/ERC4626StataTokenUpgradable.sol';
+import {Math} from '../../../src/periphery/contracts/static-a-token/ERC4626StataTokenUpgradeable.sol';
 import {StataTokenV2} from '../../../src/periphery/contracts/static-a-token/StataTokenV2.sol'; // TODO: change import to isolate to 4626
 import {SigUtils} from '../../utils/SigUtils.sol';
 import {BaseTest, TestnetERC20} from './TestBase.sol';
