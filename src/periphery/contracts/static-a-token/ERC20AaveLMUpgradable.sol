@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.17;
 
+import {ERC20Upgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol';
 import {IERC20} from 'openzeppelin-contracts/contracts/interfaces/IERC20.sol';
 import {SafeERC20} from 'openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol';
 import {SafeCast} from 'solidity-utils/contracts/oz-common/SafeCast.sol';
 
-import {Stata4626} from './Stata4626.sol';
 import {IRewardsController} from '../rewards/interfaces/IRewardsController.sol';
-import {IPool} from '../../../core/contracts/interfaces/IPool.sol';
-import {IStata4626LM, IInitializableStata4626LM} from './interfaces/IStata4626LM.sol';
+import {IERC20AaveLM} from './interfaces/IERC20AaveLM.sol';
 
 /**
  * @title Stata4626LM
@@ -17,47 +16,46 @@ import {IStata4626LM, IInitializableStata4626LM} from './interfaces/IStata4626LM
  * It supports claiming liquidity mining rewards from the Aave system.
  * @author BGD labs
  */
-contract Stata4626LM is Stata4626, IStata4626LM {
+contract ERC20AaveLMUpgradable is ERC20Upgradeable, IERC20AaveLM {
   using SafeCast for uint256;
 
-  /// @custom:storage-location erc7201:aave-dao.storage.Stata4626LM
-  struct Stata4626LMStorage {
+  /// @custom:storage-location erc7201:aave-dao.storage.ERC20AaveLM
+  struct ERC20AaveLMStorage {
+    address _referenceAsset; // a/v token to track rewards on INCENTIVES_CONTROLLER
     address[] _rewardTokens;
     mapping(address user => RewardIndexCache cache) _startIndex;
     mapping(address user => mapping(address reward => UserRewardsData cache)) _userRewardsData;
   }
 
-  // keccak256(abi.encode(uint256(keccak256("aave-dao.storage.Stata4626LM")) - 1)) & ~bytes32(uint256(0xff))
-  bytes32 private constant Stata4626LMStorageLocation =
-    0x4a43e5c82db1d4c294eb6c47f1b5f92e6755a2055d3e0d4bb07e80af15cd9d00;
+  // keccak256(abi.encode(uint256(keccak256("aave-dao.storage.ERC20AaveLM")) - 1)) & ~bytes32(uint256(0xff))
+  bytes32 private constant ERC20AaveLMStorageLocation =
+    0x4a43e5c82db1d4c294eb6c47f1b5f92e6755a2055d3e0d4bb07e80af15cd9d00; // TODO: regenerate
 
-  function _getStata4626LMStorage() private pure returns (Stata4626LMStorage storage $) {
+  function _getERC20AaveLMStorage() private pure returns (ERC20AaveLMStorage storage $) {
     assembly {
-      $.slot := Stata4626LMStorageLocation
+      $.slot := ERC20AaveLMStorageLocation
     }
   }
 
   IRewardsController public immutable INCENTIVES_CONTROLLER;
 
-  constructor(IPool pool, IRewardsController rewardsController) Stata4626(pool) {
+  constructor(IRewardsController rewardsController) {
     INCENTIVES_CONTROLLER = rewardsController;
   }
 
-  ///@inheritdoc IInitializableStata4626LM
-  function initialize(
-    address newAToken,
-    string calldata staticATokenName,
-    string calldata staticATokenSymbol
-  ) external initializer {
-    __Stata4626_init(newAToken, staticATokenName, staticATokenSymbol);
+  function __ERC20AaveLM_init(address referenceAsset_) internal onlyInitializing {
+    __ERC20AaveLM_init_unchained(referenceAsset_);
+  }
+  function __ERC20AaveLM_init_unchained(address referenceAsset_) internal onlyInitializing {
+    ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();
+    $._referenceAsset = referenceAsset_;
 
     if (INCENTIVES_CONTROLLER != IRewardsController(address(0))) {
       refreshRewardTokens();
     }
-    emit Initialized(newAToken, staticATokenName, staticATokenSymbol);
   }
 
-  ///@inheritdoc IStata4626LM
+  ///@inheritdoc IERC20AaveLM
   function claimRewardsOnBehalf(
     address onBehalfOf,
     address receiver,
@@ -71,77 +69,87 @@ contract Stata4626LM is Stata4626, IStata4626LM {
     _claimRewardsOnBehalf(onBehalfOf, receiver, rewards);
   }
 
-  ///@inheritdoc IStata4626LM
+  ///@inheritdoc IERC20AaveLM
   function claimRewards(address receiver, address[] memory rewards) external {
     _claimRewardsOnBehalf(_msgSender(), receiver, rewards);
   }
 
-  ///@inheritdoc IStata4626LM
+  ///@inheritdoc IERC20AaveLM
   function claimRewardsToSelf(address[] memory rewards) external {
     _claimRewardsOnBehalf(_msgSender(), _msgSender(), rewards);
   }
 
-  ///@inheritdoc IStata4626LM
+  ///@inheritdoc IERC20AaveLM
   function refreshRewardTokens() public override {
-    address[] memory rewards = INCENTIVES_CONTROLLER.getRewardsByAsset(address(aToken()));
+    ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();
+    address[] memory rewards = INCENTIVES_CONTROLLER.getRewardsByAsset($._referenceAsset);
     for (uint256 i = 0; i < rewards.length; i++) {
       _registerRewardToken(rewards[i]);
     }
   }
 
-  ///@inheritdoc IStata4626LM
+  ///@inheritdoc IERC20AaveLM
   function collectAndUpdateRewards(address reward) public returns (uint256) {
     if (reward == address(0)) {
       return 0;
     }
 
+    ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();
     address[] memory assets = new address[](1);
-    assets[0] = address(aToken());
+    assets[0] = address($._referenceAsset);
 
     return INCENTIVES_CONTROLLER.claimRewards(assets, type(uint256).max, address(this), reward);
   }
 
-  ///@inheritdoc IStata4626LM
+  ///@inheritdoc IERC20AaveLM
   function isRegisteredRewardToken(address reward) public view override returns (bool) {
-    Stata4626LMStorage storage $ = _getStata4626LMStorage();
+    ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();
     return $._startIndex[reward].isRegistered;
   }
 
-  ///@inheritdoc IStata4626LM
+  ///@inheritdoc IERC20AaveLM
   function getCurrentRewardsIndex(address reward) public view returns (uint256) {
     if (address(reward) == address(0)) {
       return 0;
     }
-    (, uint256 nextIndex) = INCENTIVES_CONTROLLER.getAssetIndex(address(aToken()), reward);
+    ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();
+    (, uint256 nextIndex) = INCENTIVES_CONTROLLER.getAssetIndex($._referenceAsset, reward);
     return nextIndex;
   }
 
-  ///@inheritdoc IStata4626LM
+  ///@inheritdoc IERC20AaveLM
   function getTotalClaimableRewards(address reward) external view returns (uint256) {
     if (reward == address(0)) {
       return 0;
     }
 
+    ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();
     address[] memory assets = new address[](1);
-    assets[0] = address(aToken());
+    assets[0] = $._referenceAsset;
     uint256 freshRewards = INCENTIVES_CONTROLLER.getUserRewards(assets, address(this), reward);
     return IERC20(reward).balanceOf(address(this)) + freshRewards;
   }
 
-  ///@inheritdoc IStata4626LM
+  ///@inheritdoc IERC20AaveLM
   function getClaimableRewards(address user, address reward) external view returns (uint256) {
     return _getClaimableRewards(user, reward, balanceOf(user), getCurrentRewardsIndex(reward));
   }
 
-  ///@inheritdoc IStata4626LM
+  ///@inheritdoc IERC20AaveLM
   function getUnclaimedRewards(address user, address reward) external view returns (uint256) {
-    Stata4626LMStorage storage $ = _getStata4626LMStorage();
+    ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();
     return $._userRewardsData[user][reward].unclaimedRewards;
   }
 
-  ///@inheritdoc IStata4626LM
+  ///@inheritdoc IERC20AaveLM
+  function getReferenceAsset() external view returns (address) {
+    ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();
+    return $._referenceAsset;
+  }
+
+  ///@inheritdoc IERC20AaveLM
   function rewardTokens() external view returns (address[] memory) {
-    Stata4626LMStorage storage $ = _getStata4626LMStorage();
+    ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();
     return $._rewardTokens;
   }
 
@@ -150,8 +158,8 @@ contract Stata4626LM is Stata4626, IStata4626LM {
    * @param from The address of the sender of tokens
    * @param to The address of the receiver of tokens
    */
-  function _update(address from, address to, uint256 amount) internal override(Stata4626) {
-    Stata4626LMStorage storage $ = _getStata4626LMStorage();
+  function _update(address from, address to, uint256 amount) internal virtual override {
+    ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();
     for (uint256 i = 0; i < $._rewardTokens.length; i++) {
       address rewardToken = address($._rewardTokens[i]);
       uint256 rewardsIndex = getCurrentRewardsIndex(rewardToken);
@@ -172,7 +180,7 @@ contract Stata4626LM is Stata4626, IStata4626LM {
    * @param rewardToken The address of the reward token
    */
   function _updateUser(address user, uint256 currentRewardsIndex, address rewardToken) internal {
-    Stata4626LMStorage storage $ = _getStata4626LMStorage();
+    ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();
     uint256 balance = balanceOf(user);
     if (balance > 0) {
       $._userRewardsData[user][rewardToken].unclaimedRewards = _getClaimableRewards(
@@ -218,7 +226,7 @@ contract Stata4626LM is Stata4626, IStata4626LM {
     uint256 balance,
     uint256 currentRewardsIndex
   ) internal view returns (uint256) {
-    Stata4626LMStorage storage $ = _getStata4626LMStorage();
+    ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();
     RewardIndexCache memory rewardsIndexCache = $._startIndex[reward];
     if (!rewardsIndexCache.isRegistered) {
       revert RewardNotInitialized(reward);
@@ -246,7 +254,8 @@ contract Stata4626LM is Stata4626, IStata4626LM {
     address onBehalfOf,
     address receiver,
     address[] memory rewards
-  ) internal whenNotPaused {
+  ) internal virtual {
+    // TODO: add whenNotPaused override into the joining contract
     for (uint256 i = 0; i < rewards.length; i++) {
       if (address(rewards[i]) == address(0)) {
         continue;
@@ -271,7 +280,7 @@ contract Stata4626LM is Stata4626, IStata4626LM {
         userReward = totalRewardTokenBalance;
       }
       if (userReward > 0) {
-        Stata4626LMStorage storage $ = _getStata4626LMStorage();
+        ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();
         $._userRewardsData[onBehalfOf][rewards[i]].unclaimedRewards = unclaimedReward.toUint128();
         $
         ._userRewardsData[onBehalfOf][rewards[i]]
@@ -289,7 +298,7 @@ contract Stata4626LM is Stata4626, IStata4626LM {
     if (isRegisteredRewardToken(reward)) return;
     uint256 startIndex = getCurrentRewardsIndex(reward);
 
-    Stata4626LMStorage storage $ = _getStata4626LMStorage();
+    ERC20AaveLMStorage storage $ = _getERC20AaveLMStorage();
     $._rewardTokens.push(reward);
     $._startIndex[reward] = RewardIndexCache(true, startIndex.toUint240());
 

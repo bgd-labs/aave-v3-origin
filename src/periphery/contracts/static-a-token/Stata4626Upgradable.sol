@@ -1,21 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.17;
 
-import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol';
-import {ERC20Upgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol';
-import {ERC20PermitUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PermitUpgradeable.sol';
-import {ERC20PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC20PausableUpgradeable.sol';
 import {ERC4626Upgradeable, Math, IERC4626} from 'openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/ERC4626Upgradeable.sol';
 import {SafeERC20, IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol';
 
 import {IPool, IPoolAddressesProvider} from '../../../core/contracts/interfaces/IPool.sol';
 import {IAaveOracle} from '../../../core/contracts/interfaces/IAaveOracle.sol';
 import {DataTypes, ReserveConfiguration} from '../../../core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
-import {IACLManager} from '../../../core/contracts/interfaces/IACLManager.sol';
-import {IRescuable, Rescuable} from 'solidity-utils/contracts/utils/Rescuable.sol';
 
 import {IAToken} from './interfaces/IAToken.sol';
-import {RayMathExplicitRounding} from '../libraries/RayMathExplicitRounding.sol';
 import {IStata4626} from './interfaces/IStata4626.sol';
 
 /**
@@ -24,14 +17,8 @@ import {IStata4626} from './interfaces/IStata4626.sol';
  * a token which balance doesn't increase automatically, but uses an ever-increasing exchange rate.
  * @author BGD labs
  */
-contract Stata4626 is
-  ERC20PermitUpgradeable,
-  ERC20PausableUpgradeable,
-  ERC4626Upgradeable,
-  Rescuable,
-  IStata4626
-{
-  using RayMathExplicitRounding for uint256;
+abstract contract Stata4626Upgradable is ERC4626Upgradeable, IStata4626 {
+  using Math for uint256;
 
   /// @custom:storage-location erc7201:aave-dao.storage.Stata4626
   struct Stata4626Storage {
@@ -57,43 +44,27 @@ contract Stata4626 is
     POOL_ADDRESSES_PROVIDER = pool.ADDRESSES_PROVIDER();
   }
 
-  // TODO: maybe I should not put calls to initializers here
   function __Stata4626_init(
     address newAToken,
-    string calldata staticATokenName,
-    string calldata staticATokenSymbol
+    string calldata staticATokenName
+  ) internal onlyInitializing {
+    // TODO: maybe to do some movements here
+    __Stata4626_init_unchained(newAToken, staticATokenName);
+  }
+
+  function __Stata4626_init_unchained(
+    address newAToken,
+    string calldata staticATokenName
   ) internal onlyInitializing {
     require(IAToken(newAToken).POOL() == address(POOL));
 
     IERC20 aTokenUnderlying = IERC20(IAToken(newAToken).UNDERLYING_ASSET_ADDRESS());
-
-    __ERC20_init(staticATokenName, staticATokenSymbol);
-    __ERC20Permit_init(staticATokenName);
     __ERC4626_init(aTokenUnderlying);
-    __ERC20Pausable_init();
 
     Stata4626Storage storage $ = _getStata4626Storage();
     $._aToken = IERC20(newAToken);
 
     SafeERC20.forceApprove(aTokenUnderlying, address(POOL), type(uint256).max);
-  }
-
-  modifier onlyPauseGuardian() {
-    if (!canPause(_msgSender())) revert OnlyPauseGuardian(_msgSender());
-    _;
-  }
-
-  function decimals() public view override(ERC20Upgradeable, ERC4626Upgradeable) returns (uint8) {
-    return ERC4626Upgradeable.decimals();
-  }
-  ///@inheritdoc IStata4626
-  function canPause(address actor) public view returns (bool) {
-    return IACLManager(POOL_ADDRESSES_PROVIDER.getACLManager()).isEmergencyAdmin(actor);
-  }
-
-  /// @inheritdoc IRescuable
-  function whoCanRescue() public view override returns (address) {
-    return POOL_ADDRESSES_PROVIDER.getACLAdmin();
   }
 
   ///@inheritdoc IStata4626
@@ -107,15 +78,9 @@ contract Stata4626 is
   ///@inheritdoc IStata4626
   function redeemATokens(uint256 shares, address receiver, address owner) public returns (uint256) {
     uint256 assets = previewRedeem(shares);
-    _withdraw(_msgSender(), receiver, owner, shares, assets, false);
+    _withdraw(_msgSender(), receiver, owner, assets, shares, false);
 
     return assets;
-  }
-
-  ///@inheritdoc IStata4626
-  function setPaused(bool paused) external onlyPauseGuardian {
-    if (paused) _pause();
-    else _unpause();
   }
 
   ///@inheritdoc IStata4626
@@ -174,9 +139,13 @@ contract Stata4626 is
       (10 ** ReserveConfiguration.getDecimals(reserveData.configuration));
     // if no supply cap deposit is unlimited
     if (supplyCap == 0) return type(uint256).max;
+
+    // TODO: revalidate
     // return remaining supply cap margin
+    //    uint256 currentSupply = (IAToken(reserveData.aTokenAddress).scaledTotalSupply() +
+    //      reserveData.accruedToTreasury).rayMulRoundUp(_rate());
     uint256 currentSupply = (IAToken(reserveData.aTokenAddress).scaledTotalSupply() +
-      reserveData.accruedToTreasury).rayMulRoundUp(_rate());
+      reserveData.accruedToTreasury).mulDiv(_rate(), 1e27, Math.Rounding.Ceil);
     return currentSupply > supplyCap ? 0 : supplyCap - currentSupply;
   }
 
@@ -184,7 +153,7 @@ contract Stata4626 is
   function latestAnswer() external view returns (int256) {
     uint256 aTokenUnderlyingAssetPrice = IAaveOracle(POOL_ADDRESSES_PROVIDER.getPriceOracle())
       .getAssetPrice(asset());
-    return int256(aTokenUnderlyingAssetPrice.rayMulRoundDown(_rate()));
+    return int256(aTokenUnderlyingAssetPrice.mulDiv(_rate(), 1e27, Math.Rounding.Floor)); // TODO: fix others
   }
 
   function _deposit(
@@ -270,28 +239,16 @@ contract Stata4626 is
     uint256 assets,
     Math.Rounding rounding
   ) internal view virtual override returns (uint256) {
-    // @dev we use unsignedRoundsUp instead of just simple comparison to be sure that the code will work as expected
-    // in case Math.Rounding.Trunc or Math.Rounding.Expand will be passed
-    if (Math.unsignedRoundsUp(rounding)) return assets.rayDivRoundUp(_rate());
-    return assets.rayDivRoundDown(_rate());
+    // * @notice assets * RAY / exchangeRate
+    return assets.mulDiv(1e27, _rate(), rounding); // TODO: fix others
   }
 
   function _convertToAssets(
     uint256 shares,
     Math.Rounding rounding
   ) internal view virtual override returns (uint256) {
-    // @dev we use unsignedRoundsUp instead of just simple comparison to be sure that the code will work as expected
-    // in case Math.Rounding.Trunc or Math.Rounding.Expand will be passed
-    if (Math.unsignedRoundsUp(rounding)) return shares.rayMulRoundUp(_rate());
-    return shares.rayMulRoundDown(_rate());
-  }
-
-  function _update(
-    address from,
-    address to,
-    uint256 amount
-  ) internal virtual override(ERC20PausableUpgradeable, ERC20Upgradeable) whenNotPaused {
-    ERC20PausableUpgradeable._update(from, to, amount);
+    // * @notice share * exchangeRate / RAY
+    return shares.mulDiv(_rate(), 1e27, rounding); // TODO: fix others
   }
 
   function _rate() internal view returns (uint256) {

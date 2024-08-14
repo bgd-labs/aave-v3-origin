@@ -5,7 +5,7 @@ import {IPool, DataTypes} from '../../../core/contracts/interfaces/IPool.sol';
 import {IERC20Metadata} from 'solidity-utils/contracts/oz-common/interfaces/IERC20Metadata.sol';
 import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol';
 import {Initializable} from 'solidity-utils/contracts/transparent-proxy/Initializable.sol';
-import {Stata4626LM} from './Stata4626LM.sol';
+import {StataMerger} from './StataMerger.sol';
 import {IStaticATokenFactory} from './interfaces/IStaticATokenFactory.sol';
 
 /**
@@ -56,7 +56,7 @@ contract StaticATokenFactory is Initializable, IStaticATokenFactory {
           STATIC_A_TOKEN_IMPL,
           PROXY_ADMIN,
           abi.encodeWithSelector(
-            Stata4626LM.initialize.selector,
+            StataMerger.initialize.selector,
             reserveData.aTokenAddress,
             string(abi.encodePacked('Static ', IERC20Metadata(reserveData.aTokenAddress).name())),
             string(symbol)

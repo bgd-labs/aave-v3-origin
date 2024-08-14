@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.10;
 
-import {BaseTest, IERC20, IStata4626LM} from './TestBase.sol';
+import {BaseTest, IERC20, IERC20AaveLM} from './TestBase.sol';
 
 /**
  * Testing the static token wrapper on a pool that never had LM enabled
@@ -37,12 +37,12 @@ contract StaticATokenNoLMTest is BaseTest {
     _skipBlocks(60);
 
     vm.expectRevert(
-      abi.encodeWithSelector(IStata4626LM.RewardNotInitialized.selector, REWARD_TOKEN)
+      abi.encodeWithSelector(IERC20AaveLM.RewardNotInitialized.selector, REWARD_TOKEN)
     );
     staticATokenLM.getClaimableRewards(user, REWARD_TOKEN);
 
     vm.expectRevert(
-      abi.encodeWithSelector(IStata4626LM.RewardNotInitialized.selector, REWARD_TOKEN)
+      abi.encodeWithSelector(IERC20AaveLM.RewardNotInitialized.selector, REWARD_TOKEN)
     );
     staticATokenLM.claimRewardsToSelf(rewardTokens);
 

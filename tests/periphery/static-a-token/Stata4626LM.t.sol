@@ -9,7 +9,7 @@ import {IERC20Metadata, IERC20} from 'openzeppelin-contracts/contracts/token/ERC
 import {AToken} from '../../../src/core/contracts/protocol/tokenization/AToken.sol';
 import {DataTypes} from '../../../src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 import {RayMathExplicitRounding} from '../../../src/periphery/contracts/libraries/RayMathExplicitRounding.sol';
-import {IStata4626LM} from '../../../src/periphery/contracts/static-a-token/interfaces/IStata4626LM.sol';
+import {StataMerger} from '../../../src/periphery/contracts/static-a-token/StataMerger.sol';
 import {SigUtils} from '../../utils/SigUtils.sol';
 import {BaseTest, TestnetERC20} from './TestBase.sol';
 import {IPool} from '../../../src/core/contracts/interfaces/IPool.sol';
@@ -29,7 +29,7 @@ contract Stata4626LMTest is BaseTest {
   function test_initializeShouldRevert() public {
     address impl = factory.STATIC_A_TOKEN_IMPL();
     vm.expectRevert(Initializable.InvalidInitialization.selector);
-    IStata4626LM(impl).initialize(A_TOKEN, 'hey', 'ho');
+    StataMerger(impl).initialize(A_TOKEN, 'hey', 'ho');
   }
 
   function test_getters() public view {

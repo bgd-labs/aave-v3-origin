@@ -17,7 +17,7 @@ The static-a-token contains an [EIP-4626](https://eips.ethereum.org/EIPS/eip-462
 - **Upgradable by the Aave governance.** Similar to other contracts of the Aave ecosystem, the Level 1 executor (short executor) will be able to add new features to the deployed instances of the `stataTokens`.
 - **Powered by a stataToken Factory.** Whenever a token will be listed on Aave v3, anybody will be able to call the stataToken Factory to deploy an instance for the new asset, permissionless, but still assuring the code used and permissions are properly configured without any extra headache.
 
-See [IStata4626LM.sol](./interfaces/IStata4626LM.sol) for detailed method documentation.
+See [IStata4626LM.sol](./interfaces/IERC20AaveLM.sol) for detailed method documentation.
 
 ## Deployed Addresses
 

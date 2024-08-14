@@ -11,7 +11,8 @@ import {TransparentUpgradeableProxy} from 'solidity-utils/contracts/transparent-
 import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/TransparentProxyFactory.sol';
 import {IPool} from '../../../src/core/contracts/interfaces/IPool.sol';
 import {StaticATokenFactory} from '../../../src/periphery/contracts/static-a-token/StaticATokenFactory.sol';
-import {Stata4626LM, IStata4626LM} from '../../../src/periphery/contracts/static-a-token/Stata4626LM.sol';
+import {StataMerger} from '../../../src/periphery/contracts/static-a-token/StataMerger.sol';
+import {IERC20AaveLM} from '../../../src/periphery/contracts/static-a-token/interfaces/IERC20AaveLM.sol';
 import {IAToken} from '../../../src/core/contracts/interfaces/IAToken.sol';
 import {TestnetProcedures, TestnetERC20} from '../../utils/TestnetProcedures.sol';
 import {DataTypes} from '../../../src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
@@ -30,7 +31,7 @@ abstract contract BaseTest is TestnetProcedures {
   uint256 internal userPrivateKey;
   uint256 internal spenderPrivateKey;
 
-  Stata4626LM public staticATokenLM;
+  StataMerger public staticATokenLM;
   address public proxyAdmin;
   ITransparentProxyFactory public proxyFactory;
   StaticATokenFactory public factory;
@@ -67,7 +68,7 @@ abstract contract BaseTest is TestnetProcedures {
     factory = StaticATokenFactory(report.staticATokenFactoryProxy);
     factory.createStaticATokens(POOL.getReservesList());
 
-    staticATokenLM = Stata4626LM(factory.getStaticAToken(UNDERLYING));
+    staticATokenLM = StataMerger(factory.getStaticAToken(UNDERLYING));
   }
 
   function _configureLM() internal {

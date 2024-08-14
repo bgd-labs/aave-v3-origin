@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-// TODO: I would remove it tbh
+// TODO: let's remove it tbh
 /**
  * @title IInitializableStata4626LM
  * @notice Interface for the initialize function on Stata4626LM
