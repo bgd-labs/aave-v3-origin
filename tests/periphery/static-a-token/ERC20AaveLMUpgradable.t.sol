@@ -108,7 +108,7 @@ contract ERC20AaveLMUpgradableTest is TestnetProcedures {
   }
 
   function test_claimableRewards_repro() external {
-      // TODO: the error is very big and i don't yet understand why
+    // TODO: the error is very big and i don't yet understand why
     test_claimableRewards(7486717231741512015464165162, 144, 259940699, 25757880);
   }
 
@@ -222,59 +222,50 @@ contract ERC20AaveLMUpgradableTest is TestnetProcedures {
     assertEq(claimableBefore, claimableAfter);
   }
 
-  // function _test_transfer(
-  //   uint256 depositAmount,
-  //   uint32 emissionEnd,
-  //   uint88 emissionPerSecond,
-  //   uint32 waitDuration,
-  //   address receiver,
-  //   uint256 sendAmount
-  // ) external {
-  //   TestEnv memory env = _setupTestEnvironment(
-  //     depositAmount,
-  //     emissionEnd,
-  //     emissionPerSecond,
-  //     waitDuration
-  //   );
+  function test_transfer(
+    uint256 depositAmount,
+    uint32 emissionEnd,
+    uint88 emissionPerSecond,
+    uint32 waitDuration,
+    address receiver,
+    uint256 sendAmount
+  ) external {
+    vm.assume(user != receiver);
+    TestEnv memory env = _setupTestEnvironment(
+      depositAmount,
+      emissionEnd,
+      emissionPerSecond,
+      waitDuration
+    );
 
-  //   if (sendAmount > env.depositAmount) {
-  //     vm.expectRevert(
-  //       abi.encodeWithSelector(
-  //         IERC20Errors.ERC20InsufficientBalance.selector,
-  //         user,
-  //         env.depositAmount,
-  //         sendAmount
-  //       )
-  //     );
-  //     vm.prank(user);
-  //     lmUpgradeable.transfer(receiver, sendAmount);
-  //   } else {
-  //     receiver = user;
-  //     if (receiver == user) {
-  //       uint256 claimableBefore = lmUpgradeable.getClaimableRewards(user, rewardToken);
-  //       assertEq(lmUpgradeable.getUnclaimedRewards(user, rewardToken), 0);
-  //       vm.roll(block.number + 1);
-  //       vm.warp(block.timestamp + 1);
-  //       _fund(env.depositAmount, receiver);
-  //       assertEq(lmUpgradeable.getUnclaimedRewards(user, rewardToken), claimableBefore);
-  //     } else {
-  //       _fund(env.depositAmount, receiver);
-  //       assertEq(lmUpgradeable.getUnclaimedRewards(user, rewardToken), 0);
-  //       assertEq(lmUpgradeable.getUnclaimedRewards(receiver, rewardToken), 0);
-  //     }
+    if (sendAmount > env.depositAmount) {
+      vm.expectRevert(
+        abi.encodeWithSelector(
+          IERC20Errors.ERC20InsufficientBalance.selector,
+          user,
+          env.depositAmount,
+          sendAmount
+        )
+      );
+      vm.prank(user);
+      lmUpgradeable.transfer(receiver, sendAmount);
+    } else {
+      _fund(env.depositAmount, receiver);
+      assertEq(lmUpgradeable.getUnclaimedRewards(user, rewardToken), 0);
+      assertEq(lmUpgradeable.getUnclaimedRewards(receiver, rewardToken), 0);
 
-  //     uint256 senderClaimableBefore = lmUpgradeable.getClaimableRewards(user, rewardToken);
-  //     uint256 receiverClaimableBefore = lmUpgradeable.getClaimableRewards(receiver, rewardToken);
+      uint256 senderClaimableBefore = lmUpgradeable.getClaimableRewards(user, rewardToken);
+      uint256 receiverClaimableBefore = lmUpgradeable.getClaimableRewards(receiver, rewardToken);
 
-  //     vm.prank(user);
-  //     lmUpgradeable.transfer(receiver, sendAmount);
-  //     // rewards should remain the same, but move to unclaimed
-  //     assertEq(lmUpgradeable.getUnclaimedRewards(user, rewardToken), senderClaimableBefore);
-  //     assertEq(lmUpgradeable.getClaimableRewards(user, rewardToken), senderClaimableBefore);
-  //     assertEq(lmUpgradeable.getUnclaimedRewards(receiver, rewardToken), receiverClaimableBefore);
-  //     assertEq(lmUpgradeable.getClaimableRewards(receiver, rewardToken), receiverClaimableBefore);
-  //   }
-  // }
+      vm.prank(user);
+      lmUpgradeable.transfer(receiver, sendAmount);
+      // rewards should remain the same, but move to unclaimed
+      assertEq(lmUpgradeable.getUnclaimedRewards(user, rewardToken), senderClaimableBefore);
+      assertEq(lmUpgradeable.getClaimableRewards(user, rewardToken), senderClaimableBefore);
+      assertEq(lmUpgradeable.getUnclaimedRewards(receiver, rewardToken), receiverClaimableBefore);
+      assertEq(lmUpgradeable.getClaimableRewards(receiver, rewardToken), receiverClaimableBefore);
+    }
+  }
 
   function test_isRegisteredRewardToken() external {
     assertEq(lmUpgradeable.isRegisteredRewardToken(rewardToken), false);
@@ -393,7 +384,9 @@ contract ERC20AaveLMUpgradableTest is TestnetProcedures {
    * Maintains consistency by also funding the underlying to the lmUpgradeable
    */
   function _fund(uint256 amount, address user) internal {
-    underlying.mint(address(lmUpgradeable), amount);
+    underlying.mint(user, amount);
     lmUpgradeable.mint(user, amount);
+    vm.prank(user);
+    underlying.transfer(address(lmUpgradeable), amount);
   }
 }

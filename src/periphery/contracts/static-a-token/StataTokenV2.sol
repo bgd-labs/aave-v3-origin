@@ -24,6 +24,7 @@ contract StataTokenV2 is
   ) ERC20AaveLMUpgradeable(rewardsController) ERC4626StataTokenUpgradeable(pool) {
     _disableInitializers();
   }
+
   modifier onlyPauseGuardian() {
     if (!canPause(_msgSender())) revert OnlyPauseGuardian(_msgSender());
     _;
