@@ -215,12 +215,11 @@ contract ERC20AaveLMUpgradableTest is TestnetProcedures {
 
     uint256 claimableBefore = lmUpgradeable.getClaimableRewards(user, rewardToken);
     assertEq(lmUpgradeable.getUnclaimedRewards(user, rewardToken), 0);
-    _fund(env.depositAmount, user);
+    vm.prank(user);
+    lmUpgradeable.transfer(user, env.depositAmount);
     uint256 claimableAfter = lmUpgradeable.getClaimableRewards(user, rewardToken);
-    // TODO: for some reason the claimable seems to double, but I don't understand why
+    assertEq(lmUpgradeable.getUnclaimedRewards(user, rewardToken), claimableAfter);
     assertEq(claimableBefore, claimableAfter);
-
-    //assertEq(lmUpgradeable.getUnclaimedRewards(user, rewardToken), claimableBefore);
   }
 
   // function _test_transfer(
