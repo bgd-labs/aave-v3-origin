@@ -183,47 +183,10 @@ contract Stata4626LMTest is BaseTest {
   /**
    * maxDeposit test
    */
-  function test_maxDeposit_freeze() public {
-    vm.stopPrank();
-    vm.startPrank(roleList.marketOwner);
-    contracts.poolConfiguratorProxy.setReserveFreeze(UNDERLYING, true);
 
-    uint256 max = staticATokenLM.maxDeposit(address(0));
-
-    assertEq(max, 0);
-  }
-
-  function test_maxDeposit_paused() public {
-    vm.stopPrank();
-    vm.startPrank(address(roleList.marketOwner));
-    contracts.poolConfiguratorProxy.setReservePause(UNDERLYING, true);
-
-    uint256 max = staticATokenLM.maxDeposit(address(0));
-
-    assertEq(max, 0);
-  }
-
-  function test_maxDeposit_noCap() public {
-    vm.stopPrank();
-    vm.startPrank(address(roleList.marketOwner));
-    contracts.poolConfiguratorProxy.setSupplyCap(UNDERLYING, 0);
-
-    uint256 maxDeposit = staticATokenLM.maxDeposit(address(0));
-    uint256 maxMint = staticATokenLM.maxMint(address(0));
-
-    assertEq(maxDeposit, type(uint256).max);
-    assertEq(maxMint, type(uint256).max);
-  }
 
   // should be 0 as supply is ~5k
-  function test_maxDeposit_5kCap() public {
-    vm.stopPrank();
-    vm.startPrank(address(roleList.marketOwner));
-    contracts.poolConfiguratorProxy.setSupplyCap(UNDERLYING, 5_000);
 
-    uint256 max = staticATokenLM.maxDeposit(address(0));
-    assertEq(max, 0);
-  }
 
   function test_maxDeposit_50kCap() public {
     vm.stopPrank();
@@ -248,20 +211,6 @@ contract Stata4626LMTest is BaseTest {
   /**
    * maxRedeem test
    */
-  function test_maxRedeem_paused() public {
-    uint128 amountToDeposit = 5 ether;
-    _fundUser(amountToDeposit, user);
-
-    _depositAToken(amountToDeposit, user);
-
-    vm.stopPrank();
-    vm.startPrank(address(roleList.marketOwner));
-    contracts.poolConfiguratorProxy.setReservePause(UNDERLYING, true);
-
-    uint256 max = staticATokenLM.maxRedeem(address(user));
-
-    assertEq(max, 0);
-  }
 
   function test_maxRedeem_allAvailable() public {
     uint128 amountToDeposit = 5 ether;
@@ -272,52 +221,6 @@ contract Stata4626LMTest is BaseTest {
     uint256 max = staticATokenLM.maxRedeem(address(user));
 
     assertEq(max, staticATokenLM.balanceOf(user));
-  }
-
-  function test_maxRedeem_partAvailable() public {
-    uint128 amountToDeposit = 50 ether;
-    _fundUser(amountToDeposit, user);
-
-    _depositAToken(amountToDeposit, user);
-    vm.stopPrank();
-
-    uint256 maxRedeemBefore = staticATokenLM.previewRedeem(staticATokenLM.maxRedeem(address(user)));
-    uint256 underlyingBalanceBefore = IERC20Metadata(UNDERLYING).balanceOf(A_TOKEN);
-
-    // create rich user
-    address borrowUser = address(99);
-    vm.startPrank(borrowUser);
-    deal(address(wbtc), borrowUser, 2_000e8);
-    wbtc.approve(address(POOL), 2_000e8);
-    POOL.deposit(address(wbtc), 2_000e8, borrowUser, 0);
-
-    // borrow all available
-    POOL.borrow(UNDERLYING, underlyingBalanceBefore - (maxRedeemBefore / 2), 2, 0, borrowUser);
-
-    uint256 maxRedeemAfter = staticATokenLM.previewRedeem(staticATokenLM.maxRedeem(address(user)));
-    assertApproxEqAbs(maxRedeemAfter, (maxRedeemBefore / 2), 1);
-  }
-
-  function test_maxRedeem_nonAvailable() public {
-    uint128 amountToDeposit = 50 ether;
-    _fundUser(amountToDeposit, user);
-
-    _depositAToken(amountToDeposit, user);
-    vm.stopPrank();
-
-    uint256 underlyingBalanceBefore = IERC20Metadata(UNDERLYING).balanceOf(A_TOKEN);
-    // create rich user
-    address borrowUser = address(99);
-    vm.startPrank(borrowUser);
-    deal(address(wbtc), borrowUser, 2_000e8);
-    wbtc.approve(address(POOL), 2_000e8);
-    POOL.deposit(address(wbtc), 2_000e8, borrowUser, 0);
-
-    // borrow all available
-    contracts.poolProxy.borrow(UNDERLYING, underlyingBalanceBefore, 2, 0, borrowUser);
-
-    uint256 maxRedeemAfter = staticATokenLM.maxRedeem(address(user));
-    assertEq(maxRedeemAfter, 0);
   }
 
   function test_permit() public {
