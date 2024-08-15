@@ -31,17 +31,16 @@ abstract contract BaseTest is TestnetProcedures {
   uint256 internal userPrivateKey;
   uint256 internal spenderPrivateKey;
 
-  StataTokenV2 public staticATokenLM;
+  StataTokenV2 public stataTokenV2;
   address public proxyAdmin;
   ITransparentProxyFactory public proxyFactory;
   StaticATokenFactory public factory;
 
   address[] rewardTokens;
 
-  address public UNDERLYING;
-  address public A_TOKEN;
-  address public REWARD_TOKEN;
-  IPool public POOL;
+  address public underlying;
+  address public aToken;
+  address public rewardToken;
 
   function setUp() public virtual {
     userPrivateKey = 0xA11CE;
@@ -55,62 +54,19 @@ abstract contract BaseTest is TestnetProcedures {
       tokenList.weth
     );
 
-    UNDERLYING = address(weth);
-    REWARD_TOKEN = address(new TestnetERC20('LM Reward ERC20', 'RWD', 18, OWNER));
-    A_TOKEN = reserveDataWETH.aTokenAddress;
-    POOL = contracts.poolProxy;
+    underlying = address(weth);
+    rewardToken = address(new TestnetERC20('LM Reward ERC20', 'RWD', 18, OWNER));
+    aToken = reserveDataWETH.aTokenAddress;
 
-    rewardTokens.push(REWARD_TOKEN);
+    rewardTokens.push(rewardToken);
 
     proxyFactory = ITransparentProxyFactory(report.transparentProxyFactory);
     proxyAdmin = report.proxyAdmin;
 
     factory = StaticATokenFactory(report.staticATokenFactoryProxy);
-    factory.createStaticATokens(POOL.getReservesList());
+    factory.createStaticATokens(contracts.poolProxy.getReservesList());
 
-    staticATokenLM = StataTokenV2(factory.getStaticAToken(UNDERLYING));
-  }
-
-  function _configureLM() internal {
-    PullRewardsTransferStrategy strat = new PullRewardsTransferStrategy(
-      report.rewardsControllerProxy,
-      EMISSION_ADMIN,
-      EMISSION_ADMIN
-    );
-
-    vm.startPrank(poolAdmin);
-    contracts.emissionManager.setEmissionAdmin(REWARD_TOKEN, EMISSION_ADMIN);
-    vm.stopPrank();
-
-    vm.startPrank(EMISSION_ADMIN);
-    IERC20(REWARD_TOKEN).approve(address(strat), 10_000 ether);
-    vm.stopPrank();
-
-    vm.startPrank(OWNER);
-    TestnetERC20(REWARD_TOKEN).mint(EMISSION_ADMIN, 10_000 ether);
-    vm.stopPrank();
-
-    RewardsDataTypes.RewardsConfigInput[] memory config = new RewardsDataTypes.RewardsConfigInput[](
-      1
-    );
-    config[0] = RewardsDataTypes.RewardsConfigInput(
-      0.00385 ether,
-      10_000 ether,
-      uint32(block.timestamp + 30 days),
-      A_TOKEN,
-      REWARD_TOKEN,
-      ITransferStrategyBase(strat),
-      IEACAggregatorProxy(address(2))
-    );
-
-    vm.prank(EMISSION_ADMIN);
-    contracts.emissionManager.configureAssets(config);
-
-    staticATokenLM.refreshRewardTokens();
-  }
-
-  function _fundUser(uint128 amountToDeposit, address targetUser) internal {
-    deal(UNDERLYING, targetUser, amountToDeposit);
+    stataTokenV2 = StataTokenV2(factory.getStaticAToken(underlying));
   }
 
   function _skipBlocks(uint128 blocks) internal {
@@ -118,22 +74,32 @@ abstract contract BaseTest is TestnetProcedures {
     vm.warp(block.timestamp + blocks * 12); // assuming a block is around 12seconds
   }
 
-  function _underlyingToAToken(uint256 amountToDeposit, address targetUser) internal {
-    IERC20(UNDERLYING).approve(address(POOL), amountToDeposit);
-    POOL.deposit(UNDERLYING, amountToDeposit, targetUser, 0);
-  }
-
-  function _depositAToken(uint256 amountToDeposit, address targetUser) internal returns (uint256) {
-    _underlyingToAToken(amountToDeposit, targetUser);
-    IERC20(A_TOKEN).approve(address(staticATokenLM), amountToDeposit);
-    return staticATokenLM.depositATokens(amountToDeposit, targetUser);
-  }
-
   function testAdmin() public {
     vm.stopPrank();
     vm.startPrank(proxyAdmin);
-    assertEq(TransparentUpgradeableProxy(payable(address(staticATokenLM))).admin(), proxyAdmin);
+    assertEq(TransparentUpgradeableProxy(payable(address(stataTokenV2))).admin(), proxyAdmin);
     assertEq(TransparentUpgradeableProxy(payable(address(factory))).admin(), proxyAdmin);
     vm.stopPrank();
+  }
+
+  function _fundUnderlying(uint256 assets, address user) internal {
+    deal(underlying, user, assets);
+  }
+
+  function _fundAToken(uint256 assets, address user) internal {
+    _fundUnderlying(assets, user);
+    vm.startPrank(user);
+    IERC20(underlying).approve(address(contracts.poolProxy), assets);
+    contracts.poolProxy.deposit(underlying, assets, user, 0);
+    vm.stopPrank();
+  }
+
+  function _fund4626(uint256 assets, address user) internal returns (uint256) {
+    _fundAToken(assets, user);
+    vm.startPrank(user);
+    IERC20(aToken).approve(address(stataTokenV2), assets);
+    uint256 shares = stataTokenV2.depositATokens(assets, user);
+    vm.stopPrank();
+    return shares;
   }
 }

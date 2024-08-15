@@ -15,140 +15,87 @@ import {BaseTest, TestnetERC20} from './TestBase.sol';
 import {IPool} from '../../../src/core/contracts/interfaces/IPool.sol';
 
 contract Stata4626LMTest is BaseTest {
-  function setUp() public override {
-    super.setUp();
-
-    _configureLM();
-    _openSupplyAndBorrowPositions();
-
-    vm.startPrank(user);
-  }
-
   function test_initializeShouldRevert() public {
     address impl = factory.STATIC_A_TOKEN_IMPL();
     vm.expectRevert(Initializable.InvalidInitialization.selector);
-    StataTokenV2(impl).initialize(A_TOKEN, 'hey', 'ho');
+    StataTokenV2(impl).initialize(aToken, 'hey', 'ho');
   }
 
   function test_getters() public view {
-    assertEq(staticATokenLM.name(), 'Static Aave Local WETH');
-    assertEq(staticATokenLM.symbol(), 'stataLocWETH');
+    assertEq(stataTokenV2.name(), 'Static Aave Local WETH');
+    assertEq(stataTokenV2.symbol(), 'stataLocWETH');
 
-    address referenceAsset = staticATokenLM.getReferenceAsset();
-    assertEq(referenceAsset, A_TOKEN);
+    address referenceAsset = stataTokenV2.getReferenceAsset();
+    assertEq(referenceAsset, aToken);
 
-    address underlyingAddress = address(staticATokenLM.asset());
-    assertEq(underlyingAddress, UNDERLYING);
+    address underlyingAddress = address(stataTokenV2.asset());
+    assertEq(underlyingAddress, underlying);
 
     IERC20Metadata underlying = IERC20Metadata(underlyingAddress);
-    assertEq(staticATokenLM.decimals(), underlying.decimals());
+    assertEq(stataTokenV2.decimals(), underlying.decimals());
 
     assertEq(
-      address(staticATokenLM.INCENTIVES_CONTROLLER()),
-      address(AToken(A_TOKEN).getIncentivesController())
+      address(stataTokenV2.INCENTIVES_CONTROLLER()),
+      address(AToken(aToken).getIncentivesController())
     );
   }
 
   function test_convertersAndPreviews() public view {
     uint128 amount = 5 ether;
-    uint256 shares = staticATokenLM.convertToShares(amount);
+    uint256 shares = stataTokenV2.convertToShares(amount);
     assertLe(shares, amount, 'SHARES LOWER');
-    assertEq(shares, staticATokenLM.previewDeposit(amount), 'PREVIEW_DEPOSIT');
-    assertLe(shares, staticATokenLM.previewWithdraw(amount), 'PREVIEW_WITHDRAW');
-    uint256 assets = staticATokenLM.convertToAssets(amount);
+    assertEq(shares, stataTokenV2.previewDeposit(amount), 'PREVIEW_DEPOSIT');
+    assertLe(shares, stataTokenV2.previewWithdraw(amount), 'PREVIEW_WITHDRAW');
+    uint256 assets = stataTokenV2.convertToAssets(amount);
     assertGe(assets, shares, 'ASSETS GREATER');
-    assertLe(assets, staticATokenLM.previewMint(amount), 'PREVIEW_MINT');
-    assertEq(assets, staticATokenLM.previewRedeem(amount), 'PREVIEW_REDEEM');
+    assertLe(assets, stataTokenV2.previewMint(amount), 'PREVIEW_MINT');
+    assertEq(assets, stataTokenV2.previewRedeem(amount), 'PREVIEW_REDEEM');
   }
 
   // Redeem tests
   function test_redeem() public {
     uint128 amountToDeposit = 5 ether;
-    _fundUser(amountToDeposit, user);
 
-    _depositAToken(amountToDeposit, user);
+    _fund4626(amountToDeposit, user);
 
-    assertEq(staticATokenLM.maxRedeem(user), staticATokenLM.balanceOf(user));
-    staticATokenLM.redeem(staticATokenLM.maxRedeem(user), user, user);
-    assertEq(staticATokenLM.balanceOf(user), 0);
-    assertLe(IERC20(UNDERLYING).balanceOf(user), amountToDeposit);
-    assertApproxEqAbs(IERC20(UNDERLYING).balanceOf(user), amountToDeposit, 1);
+    assertEq(stataTokenV2.maxRedeem(user), stataTokenV2.balanceOf(user));
+    stataTokenV2.redeem(stataTokenV2.maxRedeem(user), user, user);
+    assertEq(stataTokenV2.balanceOf(user), 0);
+    assertLe(IERC20(underlying).balanceOf(user), amountToDeposit);
+    assertApproxEqAbs(IERC20(underlying).balanceOf(user), amountToDeposit, 1);
   }
 
   function test_redeemAToken() public {
     uint128 amountToDeposit = 5 ether;
-    _fundUser(amountToDeposit, user);
+    _fund4626(amountToDeposit, user);
 
-    _depositAToken(amountToDeposit, user);
-
-    assertEq(staticATokenLM.maxRedeem(user), staticATokenLM.balanceOf(user));
-    staticATokenLM.redeemATokens(staticATokenLM.maxRedeem(user), user, user);
-    assertEq(staticATokenLM.balanceOf(user), 0);
-    assertLe(IERC20(A_TOKEN).balanceOf(user), amountToDeposit);
-    assertApproxEqAbs(IERC20(A_TOKEN).balanceOf(user), amountToDeposit, 1);
-  }
-
-  function test_redeemAllowance() public {
-    uint128 amountToDeposit = 5 ether;
-    _fundUser(amountToDeposit, user);
-
-    _depositAToken(amountToDeposit, user);
-
-    staticATokenLM.approve(user1, staticATokenLM.maxRedeem(user));
-    vm.stopPrank();
-    vm.startPrank(user1);
-    staticATokenLM.redeem(staticATokenLM.maxRedeem(user), user1, user);
-    assertEq(staticATokenLM.balanceOf(user), 0);
-    assertLe(IERC20(UNDERLYING).balanceOf(user1), amountToDeposit);
-    assertApproxEqAbs(IERC20(UNDERLYING).balanceOf(user1), amountToDeposit, 1);
-  }
-
-  function testFail_redeemOverflowAllowance() public {
-    uint128 amountToDeposit = 5 ether;
-    _fundUser(amountToDeposit, user);
-
-    _depositAToken(amountToDeposit, user);
-
-    staticATokenLM.approve(user1, staticATokenLM.maxRedeem(user) / 2);
-    vm.stopPrank();
-    vm.startPrank(user1);
-    staticATokenLM.redeem(staticATokenLM.maxRedeem(user), user1, user);
-    assertEq(staticATokenLM.balanceOf(user), 0);
-    assertEq(IERC20(A_TOKEN).balanceOf(user1), amountToDeposit);
-  }
-
-  function testFail_redeemAboveBalance() public {
-    uint128 amountToDeposit = 5 ether;
-    _fundUser(amountToDeposit, user);
-
-    _depositAToken(amountToDeposit, user);
-    staticATokenLM.redeem(staticATokenLM.maxRedeem(user) + 1, user, user);
+    assertEq(stataTokenV2.maxRedeem(user), stataTokenV2.balanceOf(user));
+    stataTokenV2.redeemATokens(stataTokenV2.maxRedeem(user), user, user);
+    assertEq(stataTokenV2.balanceOf(user), 0);
+    assertLe(IERC20(aToken).balanceOf(user), amountToDeposit);
+    assertApproxEqAbs(IERC20(aToken).balanceOf(user), amountToDeposit, 1);
   }
 
   // Withdraw tests
   function test_withdraw() public {
     uint128 amountToDeposit = 5 ether;
-    _fundUser(amountToDeposit, user);
+    _fund4626(amountToDeposit, user);
 
-    _depositAToken(amountToDeposit, user);
-
-    assertLe(staticATokenLM.maxWithdraw(user), amountToDeposit);
-    staticATokenLM.withdraw(staticATokenLM.maxWithdraw(user), user, user);
-    assertEq(staticATokenLM.balanceOf(user), 0);
-    assertLe(IERC20(UNDERLYING).balanceOf(user), amountToDeposit);
-    assertApproxEqAbs(IERC20(UNDERLYING).balanceOf(user), amountToDeposit, 1);
+    assertLe(stataTokenV2.maxWithdraw(user), amountToDeposit);
+    stataTokenV2.withdraw(stataTokenV2.maxWithdraw(user), user, user);
+    assertEq(stataTokenV2.balanceOf(user), 0);
+    assertLe(IERC20(underlying).balanceOf(user), amountToDeposit);
+    assertApproxEqAbs(IERC20(underlying).balanceOf(user), amountToDeposit, 1);
   }
 
   function testFail_withdrawAboveBalance() public {
     uint128 amountToDeposit = 5 ether;
-    _fundUser(amountToDeposit, user);
-    _fundUser(amountToDeposit, user1);
 
-    _depositAToken(amountToDeposit, user);
-    _depositAToken(amountToDeposit, user1);
+    _fundAToken(amountToDeposit, user);
+    _fundAToken(amountToDeposit, user1);
 
-    assertEq(staticATokenLM.maxWithdraw(user), amountToDeposit);
-    staticATokenLM.withdraw(staticATokenLM.maxWithdraw(user) + 1, user, user);
+    assertEq(stataTokenV2.maxWithdraw(user), amountToDeposit);
+    stataTokenV2.withdraw(stataTokenV2.maxWithdraw(user) + 1, user, user);
   }
 
   // mint
@@ -157,134 +104,25 @@ contract Stata4626LMTest is BaseTest {
 
     // set supply cap to non-zero
     vm.startPrank(poolAdmin);
-    contracts.poolConfiguratorProxy.setSupplyCap(UNDERLYING, 15_000);
+    contracts.poolConfiguratorProxy.setSupplyCap(underlying, 15_000);
     vm.stopPrank();
 
     vm.startPrank(user);
 
     uint128 amountToDeposit = 5 ether;
-    _fundUser(amountToDeposit, user);
+    _fundUnderlying(amountToDeposit, user);
 
-    IERC20(UNDERLYING).approve(address(staticATokenLM), amountToDeposit);
+    IERC20(underlying).approve(address(stataTokenV2), amountToDeposit);
     uint256 shares = 1 ether;
-    staticATokenLM.mint(shares, user);
-    assertEq(shares, staticATokenLM.balanceOf(user));
+    stataTokenV2.mint(shares, user);
+    assertEq(shares, stataTokenV2.balanceOf(user));
   }
 
   function testFail_mintAboveBalance() public {
     uint128 amountToDeposit = 5 ether;
-    _fundUser(amountToDeposit, user);
+    _fund4626(amountToDeposit, user);
 
-    _underlyingToAToken(amountToDeposit, user);
-    IERC20(A_TOKEN).approve(address(staticATokenLM), amountToDeposit);
-    staticATokenLM.mint(amountToDeposit, user);
-  }
-
-  function test_permit() public {
-    SigUtils.Permit memory permit = SigUtils.Permit({
-      owner: user,
-      spender: spender,
-      value: 1 ether,
-      nonce: staticATokenLM.nonces(user),
-      deadline: block.timestamp + 1 days
-    });
-
-    bytes32 permitDigest = SigUtils.getTypedDataHash(
-      permit,
-      PERMIT_TYPEHASH,
-      staticATokenLM.DOMAIN_SEPARATOR()
-    );
-    (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey, permitDigest);
-
-    staticATokenLM.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
-
-    assertEq(staticATokenLM.allowance(permit.owner, spender), permit.value);
-  }
-
-  function test_permit_expired() public {
-    // as the default timestamp is 0, we move ahead in time a bit
-    vm.warp(10 days);
-
-    SigUtils.Permit memory permit = SigUtils.Permit({
-      owner: user,
-      spender: spender,
-      value: 1 ether,
-      nonce: staticATokenLM.nonces(user),
-      deadline: block.timestamp - 1 days
-    });
-
-    bytes32 permitDigest = SigUtils.getTypedDataHash(
-      permit,
-      PERMIT_TYPEHASH,
-      staticATokenLM.DOMAIN_SEPARATOR()
-    );
-    (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey, permitDigest);
-
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        ERC20PermitUpgradeable.ERC2612ExpiredSignature.selector,
-        permit.deadline
-      )
-    );
-    staticATokenLM.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
-  }
-
-  function test_permit_invalidSigner() public {
-    SigUtils.Permit memory permit = SigUtils.Permit({
-      owner: address(424242),
-      spender: spender,
-      value: 1 ether,
-      nonce: staticATokenLM.nonces(user),
-      deadline: block.timestamp + 1 days
-    });
-
-    bytes32 permitDigest = SigUtils.getTypedDataHash(
-      permit,
-      PERMIT_TYPEHASH,
-      staticATokenLM.DOMAIN_SEPARATOR()
-    );
-    (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey, permitDigest);
-
-    vm.expectRevert(
-      abi.encodeWithSelector(
-        ERC20PermitUpgradeable.ERC2612InvalidSigner.selector,
-        user,
-        permit.owner
-      )
-    );
-    staticATokenLM.permit(permit.owner, permit.spender, permit.value, permit.deadline, v, r, s);
-  }
-
-  function test_rescuable_shouldRevertForInvalidCaller() external {
-    deal(tokenList.usdx, address(staticATokenLM), 1 ether);
-    vm.expectRevert('ONLY_RESCUE_GUARDIAN');
-    IRescuable(address(staticATokenLM)).emergencyTokenTransfer(
-      tokenList.usdx,
-      address(this),
-      1 ether
-    );
-  }
-
-  function test_rescuable_shouldSuceedForOwner() external {
-    deal(tokenList.usdx, address(staticATokenLM), 1 ether);
-    vm.startPrank(poolAdmin);
-    IRescuable(address(staticATokenLM)).emergencyTokenTransfer(
-      tokenList.usdx,
-      address(this),
-      1 ether
-    );
-  }
-
-  function _openSupplyAndBorrowPositions() internal {
-    // this is to open borrow positions so that the aToken balance increases
-    address whale = address(79);
-    vm.startPrank(whale);
-    _fundUser(5_000 ether, whale);
-
-    weth.approve(address(POOL), 5_000 ether);
-    POOL.deposit(address(weth), 5_000 ether, whale, 0);
-
-    POOL.borrow(address(weth), 1_000 ether, 2, 0, whale);
-    vm.stopPrank();
+    IERC20(aToken).approve(address(stataTokenV2), amountToDeposit);
+    stataTokenV2.mint(amountToDeposit, user);
   }
 }

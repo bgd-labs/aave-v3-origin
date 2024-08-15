@@ -5,7 +5,7 @@ import {IERC20Errors} from 'openzeppelin-contracts/contracts/interfaces/draft-IE
 import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {IPool} from '../../../src/core/contracts/interfaces/IPool.sol';
 import {TestnetProcedures, TestnetERC20} from '../../utils/TestnetProcedures.sol';
-import {ERC4626StataTokenUpgradeable, IStata4626} from '../../../src/periphery/contracts/static-a-token/ERC4626StataTokenUpgradeable.sol';
+import {ERC4626StataTokenUpgradeable, IERC4626StataToken} from '../../../src/periphery/contracts/static-a-token/ERC4626StataTokenUpgradeable.sol';
 import {IRewardsController} from '../../../src/periphery/contracts/rewards/interfaces/IRewardsController.sol';
 import {PullRewardsTransferStrategy, ITransferStrategyBase} from '../../../src/periphery/contracts/rewards/transfer-strategies/PullRewardsTransferStrategy.sol';
 import {RewardsDataTypes} from '../../../src/periphery/contracts/rewards/libraries/RewardsDataTypes.sol';
@@ -17,7 +17,7 @@ contract MockERC4626StataTokenUpgradeable is ERC4626StataTokenUpgradeable {
   constructor(IPool pool) ERC4626StataTokenUpgradeable(pool) {}
 
   function mockInit(address aToken) external initializer {
-    __Stata4626_init(aToken);
+    __ERC4626StataToken_init(aToken);
   }
 }
 
@@ -44,6 +44,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     erc4626Upgradeable.mockInit(address(reserveDataWETH.aTokenAddress));
   }
 
+  // ### DEPOSIT TESTS ###
   function test_depositATokens(uint128 assets, address receiver) public {
     vm.assume(receiver != address(0));
     TestEnv memory env = _setupTestEnv(assets);
@@ -63,6 +64,16 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     test_depositATokens(1 ether, user);
   }
 
+  function test_deposit_shouldRevert_insufficientAllowance(uint128 assets) external {
+    TestEnv memory env = _setupTestEnv(assets);
+    _fundAToken(env.amount, user);
+
+    vm.expectRevert(); // underflows
+    vm.prank(user);
+    uint256 shares = erc4626Upgradeable.depositATokens(env.amount, user);
+  }
+
+  // ### REDEEM TESTS ###
   function test_redeemATokens(uint256 assets, address receiver) public {
     vm.assume(receiver != address(0));
     TestEnv memory env = _setupTestEnv(assets);
@@ -106,6 +117,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     erc4626Upgradeable.redeemATokens(env.amount, address(this), user);
   }
 
+  // ### maxDeposit TESTS ###
   function test_maxDeposit_freeze() public {
     vm.prank(roleList.marketOwner);
     contracts.poolConfiguratorProxy.setReserveFreeze(underlying, true);
@@ -144,8 +156,9 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     assertEq(max, cap * 10 ** erc4626Upgradeable.decimals());
   }
 
-  //TODO: perhaps makes sense to add maxDeposit test with accruedToTreasury etc
+  // TODO: perhaps makes sense to add maxDeposit test with accruedToTreasury etc
 
+  // ### maxRedeem TESTS ###
   function test_maxRedeem_paused(uint128 assets) public {
     TestEnv memory env = _setupTestEnv(assets);
     uint256 shares = _fund4626(env.amount, user);
@@ -185,7 +198,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     assertEq(max, erc4626Upgradeable.previewRedeem(assets - amountToBorrow));
   }
 
-  // ### tests for the token internal oracle
+  // ### lastestAnswer TESTS ###
   function test_latestAnswer_priceShouldBeEqualOnDefaultIndex() public {
     vm.mockCall(
       address(contracts.poolProxy),
