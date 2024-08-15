@@ -7,6 +7,15 @@ import {IERC4626StataToken} from '../../../src/periphery/contracts/static-a-toke
 import {BaseTest} from './TestBase.sol';
 
 contract StataTokenV2PausableTest is BaseTest {
+  function test_canPause() external {
+    assertEq(stataTokenV2.canPause(poolAdmin), true);
+  }
+
+  function test_canPause_shouldReturnFalse(address actor) external {
+    vm.assume(actor != poolAdmin);
+    assertEq(stataTokenV2.canPause(actor), false);
+  }
+
   function test_setPaused_shouldRevertForInvalidCaller(address actor) external {
     vm.assume(actor != poolAdmin && actor != proxyAdmin);
     vm.expectRevert(abi.encodeWithSelector(IERC4626StataToken.OnlyPauseGuardian.selector, actor));

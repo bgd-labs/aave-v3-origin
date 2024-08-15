@@ -5,7 +5,7 @@ import {IERC20Errors} from 'openzeppelin-contracts/contracts/interfaces/draft-IE
 import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 import {IPool} from '../../../src/core/contracts/interfaces/IPool.sol';
 import {TestnetProcedures, TestnetERC20} from '../../utils/TestnetProcedures.sol';
-import {ERC4626StataTokenUpgradeable, IERC4626StataToken} from '../../../src/periphery/contracts/static-a-token/ERC4626StataTokenUpgradeable.sol';
+import {ERC4626Upgradeable, ERC4626StataTokenUpgradeable, IERC4626StataToken} from '../../../src/periphery/contracts/static-a-token/ERC4626StataTokenUpgradeable.sol';
 import {IRewardsController} from '../../../src/periphery/contracts/rewards/interfaces/IRewardsController.sol';
 import {PullRewardsTransferStrategy, ITransferStrategyBase} from '../../../src/periphery/contracts/rewards/transfer-strategies/PullRewardsTransferStrategy.sol';
 import {RewardsDataTypes} from '../../../src/periphery/contracts/rewards/libraries/RewardsDataTypes.sol';
@@ -44,6 +44,24 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     erc4626Upgradeable.mockInit(address(reserveDataWETH.aTokenAddress));
   }
 
+  function test_2701() external view {
+    assertEq(
+      keccak256(abi.encode(uint256(keccak256('aave-dao.storage.ERC4626StataToken')) - 1)) &
+        ~bytes32(uint256(0xff)),
+      0x55029d3f54709e547ed74b2fc842d93107ab1490ab7555dd9dd0bf6451101900
+    );
+  }
+
+  // ### GETTERS TESTS ###
+  function test_convertersAndPreviews(uint128 assets) public view {
+    uint256 shares = erc4626Upgradeable.convertToShares(assets);
+    assertEq(shares, erc4626Upgradeable.previewDeposit(assets));
+    assertEq(shares, erc4626Upgradeable.previewWithdraw(assets));
+    assertEq(erc4626Upgradeable.convertToAssets(shares), assets);
+    assertEq(erc4626Upgradeable.previewMint(shares), assets);
+    assertEq(erc4626Upgradeable.previewRedeem(shares), assets);
+  }
+
   // ### DEPOSIT TESTS ###
   function test_depositATokens(uint128 assets, address receiver) public {
     vm.assume(receiver != address(0));
@@ -70,7 +88,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
 
     vm.expectRevert(); // underflows
     vm.prank(user);
-    uint256 shares = erc4626Upgradeable.depositATokens(env.amount, user);
+    erc4626Upgradeable.depositATokens(env.amount, user);
   }
 
   // ### REDEEM TESTS ###
@@ -80,10 +98,10 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     uint256 shares = _fund4626(env.amount, user);
 
     vm.prank(user);
-    erc4626Upgradeable.redeemATokens(shares, receiver, user);
+    uint256 redeemedAssets = erc4626Upgradeable.redeemATokens(shares, receiver, user);
 
     assertEq(erc4626Upgradeable.balanceOf(user), 0);
-    assertEq(IERC20(aToken).balanceOf(receiver), env.amount);
+    assertEq(IERC20(aToken).balanceOf(receiver), redeemedAssets);
   }
 
   function test_redeemATokens_onBehalf_shouldRevert_insufficientAllowance(
@@ -113,8 +131,80 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     uint256 shares = _fund4626(env.amount, user);
 
     vm.prank(user);
-    erc4626Upgradeable.approve(address(this), env.amount);
-    erc4626Upgradeable.redeemATokens(env.amount, address(this), user);
+    erc4626Upgradeable.approve(address(this), shares);
+    uint256 redeemedAssets = erc4626Upgradeable.redeemATokens(shares, address(this), user);
+
+    assertEq(erc4626Upgradeable.balanceOf(user), 0);
+    assertEq(IERC20(aToken).balanceOf(address(this)), redeemedAssets);
+  }
+
+  function test_redeem(uint256 assets, address receiver) external {
+    vm.assume(receiver != address(0));
+    TestEnv memory env = _setupTestEnv(assets);
+    uint256 shares = _fund4626(env.amount, user);
+
+    vm.prank(user);
+    uint256 redeemedAssets = erc4626Upgradeable.redeem(shares, receiver, user);
+    assertEq(erc4626Upgradeable.balanceOf(user), 0);
+    assertLe(IERC20(underlying).balanceOf(receiver), redeemedAssets);
+  }
+
+  // ### withdraw TESTS ###
+  function test_withdraw(uint256 assets, address receiver) public {
+    vm.assume(receiver != address(0));
+    TestEnv memory env = _setupTestEnv(assets);
+    uint256 shares = _fund4626(env.amount, user);
+
+    vm.prank(user);
+    uint256 withdrawnShares = erc4626Upgradeable.withdraw(env.amount, receiver, user);
+    assertEq(withdrawnShares, shares);
+    assertEq(erc4626Upgradeable.balanceOf(user), 0);
+    assertLe(IERC20(underlying).balanceOf(receiver), env.amount);
+    assertApproxEqAbs(IERC20(underlying).balanceOf(receiver), env.amount, 1);
+  }
+
+  function test_withdraw_shouldRevert_moreThenAvailable(uint256 assets, address receiver) public {
+    vm.assume(receiver != address(0));
+    TestEnv memory env = _setupTestEnv(assets);
+    _fund4626(env.amount, user);
+
+    vm.prank(user);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        ERC4626Upgradeable.ERC4626ExceededMaxWithdraw.selector,
+        address(user),
+        env.amount + 1,
+        env.amount
+      )
+    );
+    erc4626Upgradeable.withdraw(env.amount + 1, receiver, user);
+  }
+
+  // ### mint TESTS ###
+  function test_mint(uint256 assets, address receiver) public {
+    vm.assume(receiver != address(0));
+    TestEnv memory env = _setupTestEnv(assets);
+    _fundUnderlying(env.amount, user);
+
+    vm.startPrank(user);
+    IERC20(underlying).approve(address(erc4626Upgradeable), env.amount);
+    uint256 shares = erc4626Upgradeable.previewDeposit(env.amount);
+    uint256 assetsUsedForMinting = erc4626Upgradeable.mint(shares, receiver);
+    assertEq(assetsUsedForMinting, env.amount);
+    assertEq(erc4626Upgradeable.balanceOf(receiver), shares);
+  }
+
+  function test_mint_shouldRevert_mintMoreThenBalance(uint256 assets, address receiver) public {
+    vm.assume(receiver != address(0));
+    TestEnv memory env = _setupTestEnv(assets);
+    _fundUnderlying(env.amount, user);
+
+    vm.startPrank(user);
+    IERC20(underlying).approve(address(erc4626Upgradeable), type(uint256).max);
+    uint256 shares = erc4626Upgradeable.previewDeposit(env.amount);
+
+    vm.expectRevert();
+    uint256 assetsUsedForMinting = erc4626Upgradeable.mint(shares + 1, receiver);
   }
 
   // ### maxDeposit TESTS ###
@@ -161,7 +251,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
   // ### maxRedeem TESTS ###
   function test_maxRedeem_paused(uint128 assets) public {
     TestEnv memory env = _setupTestEnv(assets);
-    uint256 shares = _fund4626(env.amount, user);
+    _fund4626(env.amount, user);
 
     vm.prank(address(roleList.marketOwner));
     contracts.poolConfiguratorProxy.setReservePause(underlying, true);
@@ -233,7 +323,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
 
   function _setupTestEnv(uint256 amount) internal returns (TestEnv memory) {
     TestEnv memory env;
-    env.amount = bound(amount, 1, type(uint128).max);
+    env.amount = bound(amount, 1, type(uint96).max);
     return env;
   }
 

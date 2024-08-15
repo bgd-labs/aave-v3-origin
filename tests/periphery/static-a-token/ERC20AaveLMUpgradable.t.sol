@@ -85,6 +85,28 @@ contract ERC20AaveLMUpgradableTest is TestnetProcedures {
     contracts.emissionManager.setEmissionAdmin(rewardToken, emissionAdmin);
   }
 
+  function test_2701() external view {
+    assertEq(
+      keccak256(abi.encode(uint256(keccak256('aave-dao.storage.ERC20AaveLM')) - 1)) &
+        ~bytes32(uint256(0xff)),
+      0x4fad66563f105be0bff96185c9058c4934b504d3ba15ca31e86294f0b01fd200
+    );
+  }
+
+  function test_noRewardsInitialized() external {
+    vm.expectRevert(
+      abi.encodeWithSelector(IERC20AaveLM.RewardNotInitialized.selector, rewardToken)
+    );
+    lmUpgradeable.getClaimableRewards(user, rewardToken);
+  }
+
+  function test_noopWhenNotInitialized() external {
+    assertEq(IERC20(rewardToken).balanceOf(address(lmUpgradeable)), 0);
+    assertEq(lmUpgradeable.getTotalClaimableRewards(rewardToken), 0);
+    assertEq(lmUpgradeable.collectAndUpdateRewards(rewardToken), 0);
+    assertEq(IERC20(rewardToken).balanceOf(address(lmUpgradeable)), 0);
+  }
+
   function test_claimableRewards(
     uint256 depositAmount,
     uint32 emissionEnd,
