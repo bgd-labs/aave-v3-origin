@@ -45,7 +45,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
   }
 
   function test_depositATokens(uint128 assets, address receiver) public {
-      vm.assume(receiver != address(0));
+    vm.assume(receiver != address(0));
     TestEnv memory env = _setupTestEnv(assets);
     _fundAToken(env.amount, user);
 
@@ -64,7 +64,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
   }
 
   function test_redeemATokens(uint256 assets, address receiver) public {
-      vm.assume(receiver != address(0));
+    vm.assume(receiver != address(0));
     TestEnv memory env = _setupTestEnv(assets);
     uint256 shares = _fund4626(env.amount, user);
 
@@ -147,8 +147,8 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
   //TODO: perhaps makes sense to add maxDeposit test with accruedToTreasury etc
 
   function test_maxRedeem_paused(uint128 assets) public {
-      TestEnv memory env = _setupTestEnv(assets);
-      uint256 shares = _fund4626(env.amount, user);
+    TestEnv memory env = _setupTestEnv(assets);
+    uint256 shares = _fund4626(env.amount, user);
 
     vm.prank(address(roleList.marketOwner));
     contracts.poolConfiguratorProxy.setReservePause(underlying, true);
@@ -159,8 +159,8 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
   }
 
   function test_maxRedeem_sufficientAvailableLiquidity(uint128 assets) public {
-      TestEnv memory env = _setupTestEnv(assets);
-      uint256 shares = _fund4626(env.amount, user);
+    TestEnv memory env = _setupTestEnv(assets);
+    uint256 shares = _fund4626(env.amount, user);
 
     uint256 max = erc4626Upgradeable.maxRedeem(address(user));
 
@@ -170,22 +170,20 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
   function test_maxRedeem_inSufficientAvailableLiquidity(uint256 amountToBorrow) public {
     uint128 assets = 1 ether;
     amountToBorrow = bound(amountToBorrow, 1, assets);
-      uint256 shares = _fund4626(assets, user);
+    uint256 shares = _fund4626(assets, user);
 
-      // borrow out some assets
-      address borrowUser = address(99);
-      vm.startPrank(borrowUser);
-      deal(address(wbtc), borrowUser, 2_000e8);
-      wbtc.approve(address(contracts.poolProxy), 2_000e8);
-      contracts.poolProxy.deposit(address(wbtc), 2_000e8, borrowUser, 0);
-contracts.poolProxy.borrow(underlying, amountToBorrow, 2, 0, borrowUser);
-
+    // borrow out some assets
+    address borrowUser = address(99);
+    vm.startPrank(borrowUser);
+    deal(address(wbtc), borrowUser, 2_000e8);
+    wbtc.approve(address(contracts.poolProxy), 2_000e8);
+    contracts.poolProxy.deposit(address(wbtc), 2_000e8, borrowUser, 0);
+    contracts.poolProxy.borrow(underlying, amountToBorrow, 2, 0, borrowUser);
 
     uint256 max = erc4626Upgradeable.maxRedeem(address(user));
 
     assertEq(max, erc4626Upgradeable.previewRedeem(assets - amountToBorrow));
   }
-
 
   // ### tests for the token internal oracle
   function test_latestAnswer_priceShouldBeEqualOnDefaultIndex() public {

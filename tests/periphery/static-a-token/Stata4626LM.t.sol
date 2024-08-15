@@ -180,49 +180,6 @@ contract Stata4626LMTest is BaseTest {
     staticATokenLM.mint(amountToDeposit, user);
   }
 
-  /**
-   * maxDeposit test
-   */
-
-
-  // should be 0 as supply is ~5k
-
-
-  function test_maxDeposit_50kCap() public {
-    vm.stopPrank();
-    vm.startPrank(address(roleList.marketOwner));
-    contracts.poolConfiguratorProxy.setSupplyCap(UNDERLYING, 50_000);
-
-    uint256 max = staticATokenLM.maxDeposit(address(0));
-    DataTypes.ReserveDataLegacy memory reserveData = POOL.getReserveData(UNDERLYING);
-    assertEq(
-      max,
-      50_000 *
-        (10 ** IERC20Metadata(UNDERLYING).decimals()) -
-        (IERC20Metadata(A_TOKEN).totalSupply() +
-          Math.mulDiv(
-            reserveData.accruedToTreasury,
-            POOL.getReserveNormalizedIncome(UNDERLYING),
-            1e27
-          ))
-    );
-  }
-
-  /**
-   * maxRedeem test
-   */
-
-  function test_maxRedeem_allAvailable() public {
-    uint128 amountToDeposit = 5 ether;
-    _fundUser(amountToDeposit, user);
-
-    _depositAToken(amountToDeposit, user);
-
-    uint256 max = staticATokenLM.maxRedeem(address(user));
-
-    assertEq(max, staticATokenLM.balanceOf(user));
-  }
-
   function test_permit() public {
     SigUtils.Permit memory permit = SigUtils.Permit({
       owner: user,
