@@ -42,10 +42,9 @@ For this project, the security procedures applied/being finished are:
 ### Inheritance
 
 The `StaticATokenLM`(v1) was based on solmate.
-To future proof the `StataTokenV2`(v2) the implementation is now based on [open-zeppelin-upgradeable](https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable) which relies on [`ERC-7201`](https://eips.ethereum.org/EIPS/eip-7201) to isolate storage per contract.
-This will allow for more flexible addition of extensions in the future.
+To allow more flexibility the new `StataTokenV2`(v2) is based on [open-zeppelin-upgradeable](https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable) which relies on [`ERC-7201`](https://eips.ethereum.org/EIPS/eip-7201) which isolates storage per contract.
 
-The `StataTokenV2` is seperated in 3 different contract, where `StataTokenV2` inherits `ERC4626StataToken` and `ERC20AaveLM`.
+The `StataTokenV2` is seperated in 3 different contracts, where `StataTokenV2` inherits `ERC4626StataToken` and `ERC20AaveLM`.
 
 - `ERC20AaveLM` is an abstract contract implementing the forwarding of liquidity mining from an underlying AaveERC20 - an ERC20 implementing `scaled` functions - to a wrapper contract.
 - `ERC4626StataToken` is an abstract contract implementing the [EIP-4626](https://eips.ethereum.org/EIPS/eip-4626) methods for an underlying aToken. In addition it adds a `latestAnswer`.
