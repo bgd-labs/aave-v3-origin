@@ -97,7 +97,9 @@ abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IERC4626St
       assetToDeposit.permit(_msgSender(), address(this), assets, deadline, sig.v, sig.r, sig.s)
     {} catch {}
 
-    return depositToAave ? deposit(assets, receiver) : depositATokens(assets, receiver);
+    uint256 shares = previewDeposit(assets);
+    _deposit(_msgSender(), receiver, assets, shares, depositToAave);
+    return shares;
   }
 
   ///@inheritdoc IERC4626StataToken
