@@ -13,7 +13,7 @@ import {IAToken} from './interfaces/IAToken.sol';
 import {IERC4626StataToken} from './interfaces/IERC4626StataToken.sol';
 
 /**
- * @title ERC4626StataTokenUpgradeable.sol.sol
+ * @title ERC4626StataTokenUpgradeable
  * @notice Wrapper smart contract that allows to deposit tokens on the Aave protocol and receive
  * a token which balance doesn't increase automatically, but uses an ever-increasing exchange rate.
  * @dev ERC20 extension, so ERC20 initialization should be done by the children contract/s
