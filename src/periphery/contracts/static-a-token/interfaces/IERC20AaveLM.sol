@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {IInitializableStata4626LM} from './IInitializableStata4626LM.sol';
-
-interface IStata4626LM is IInitializableStata4626LM {
+interface IERC20AaveLM {
   struct UserRewardsData {
     uint128 rewardsIndexOnLastInteraction; // (in RAYs)
     uint128 unclaimedRewards; // (in RAYs)
@@ -81,6 +79,12 @@ interface IStata4626LM is IInitializableStata4626LM {
    * @return uint256 The underlying asset reward index in RAY
    */
   function getCurrentRewardsIndex(address reward) external view returns (uint256);
+
+  /**
+   * @notice Returns reference a/v token address used on INCENTIVES_CONTROLLER for tracking
+   * @return address of reference token
+   */
+  function getReferenceAsset() external view returns (address);
 
   /**
    * @notice The IERC20s that are currently rewarded to addresses of the vault via LM on incentivescontroller.

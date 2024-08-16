@@ -3,21 +3,14 @@ pragma solidity ^0.8.10;
 
 import {IERC20} from 'openzeppelin-contracts/contracts/interfaces/IERC20.sol';
 
-interface IStata4626 {
-  // TODO: cleanup
+interface IERC4626StataToken {
   struct SignatureParams {
     uint8 v;
     bytes32 r;
     bytes32 s;
   }
 
-  struct PermitParams {
-    uint256 value;
-    uint256 deadline;
-    uint8 v;
-    bytes32 r;
-    bytes32 s;
-  }
+  error PoolAddressMismatch(address pool);
 
   error StaticATokenInvalidZeroShares();
 
@@ -44,23 +37,26 @@ interface IStata4626 {
   function depositATokens(uint256 assets, address receiver) external returns (uint256);
 
   /**
+   * @notice Universal deposit method for proving aToken or underlying liquidity with permit
+   * @param assets The amount of aTokens or underlying to deposit
+   * @param receiver The address that will receive the static aTokens
+   * @param deadline Must be a timestamp in the future
+   * @param sig A `secp256k1` signature params from `msgSender()`
+   * @return uint256 The amount of StaticAToken minted, static balance
+   **/
+  function depositWithPermit(
+    uint256 assets,
+    address receiver,
+    uint256 deadline,
+    SignatureParams memory sig,
+    bool depositToAave
+  ) external returns (uint256);
+
+  /**
    * @notice The aToken used inside the 4626 vault.
    * @return IERC20 The aToken IERC20.
    */
   function aToken() external view returns (IERC20);
-
-  /**
-   * @notice Checks if the passed actor is permissioned emergency admin.
-   * @param actor The reward to claim
-   * @return bool signaling if actor can pause the vault.
-   */
-  function canPause(address actor) external view returns (bool);
-
-  /**
-   * @notice Pauses/unpauses all system's operations
-   * @param paused boolean determining if the token should be paused or unpaused
-   */
-  function setPaused(bool paused) external;
 
   /**
    * @notice Returns the current asset price of the stataToken.
