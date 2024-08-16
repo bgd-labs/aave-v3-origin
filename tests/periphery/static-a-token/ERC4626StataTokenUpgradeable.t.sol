@@ -3,6 +3,7 @@ pragma solidity ^0.8.10;
 
 import {IERC20Errors} from 'openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol';
 import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
+import {IERC20Permit} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol';
 import {IPool} from '../../../src/core/contracts/interfaces/IPool.sol';
 import {TestnetProcedures, TestnetERC20} from '../../utils/TestnetProcedures.sol';
 import {ERC4626Upgradeable, ERC4626StataTokenUpgradeable, IERC4626StataToken} from '../../../src/periphery/contracts/static-a-token/ERC4626StataTokenUpgradeable.sol';
@@ -11,6 +12,7 @@ import {PullRewardsTransferStrategy, ITransferStrategyBase} from '../../../src/p
 import {RewardsDataTypes} from '../../../src/periphery/contracts/rewards/libraries/RewardsDataTypes.sol';
 import {IEACAggregatorProxy} from '../../../src/periphery/contracts/misc/interfaces/IEACAggregatorProxy.sol';
 import {DataTypes} from '../../../src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
+import {SigUtils} from '../../utils/SigUtils.sol';
 
 // Minimal mock as contract is abstract
 contract MockERC4626StataTokenUpgradeable is ERC4626StataTokenUpgradeable {
@@ -35,13 +37,13 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     userPrivateKey = 0xA11CE;
     user = address(vm.addr(userPrivateKey));
 
-    DataTypes.ReserveDataLegacy memory reserveDataWETH = contracts.poolProxy.getReserveData(
-      tokenList.weth
+    DataTypes.ReserveDataLegacy memory reserveData = contracts.poolProxy.getReserveData(
+      tokenList.usdx
     );
-    underlying = address(tokenList.weth);
-    aToken = reserveDataWETH.aTokenAddress;
+    underlying = address(tokenList.usdx);
+    aToken = reserveData.aTokenAddress;
     erc4626Upgradeable = new MockERC4626StataTokenUpgradeable(contracts.poolProxy);
-    erc4626Upgradeable.mockInit(address(reserveDataWETH.aTokenAddress));
+    erc4626Upgradeable.mockInit(address(reserveData.aTokenAddress));
   }
 
   function test_2701() external view {
@@ -89,6 +91,101 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     vm.expectRevert(); // underflows
     vm.prank(user);
     erc4626Upgradeable.depositATokens(env.amount, user);
+  }
+
+  function test_depositWithPermit_shouldRevert_emptyPermit_noPreApproval(uint128 assets) external {
+      TestEnv memory env = _setupTestEnv(assets);
+      _fundAToken(env.amount, user);
+      IERC4626StataToken.SignatureParams memory sig;
+      vm.expectRevert(); // will underflow
+      vm.prank(user);
+      erc4626Upgradeable.depositWithPermit(env.amount, user, block.timestamp + 1000, sig, false);
+  }
+
+  function test_depositWithPermit_emptyPermit_underlying_preApproval(uint128 assets, address receiver) external {
+      vm.assume(receiver != address(0));
+      TestEnv memory env = _setupTestEnv(assets);
+      _fundUnderlying(env.amount, user);
+      IERC4626StataToken.SignatureParams memory sig;
+      vm.prank(user);
+      IERC20(underlying).approve(address(erc4626Upgradeable), env.amount);
+      vm.prank(user);
+      uint256 shares = erc4626Upgradeable.depositWithPermit(env.amount, receiver, block.timestamp + 1000, sig, true);
+
+      assertEq(erc4626Upgradeable.balanceOf(receiver), shares);
+      assertEq(IERC20(aToken).balanceOf(address(erc4626Upgradeable)), env.amount);
+      assertEq(IERC20(aToken).balanceOf(user), 0);
+  }
+
+  function test_depositWithPermit_emptyPermit_aToken_preApproval(uint128 assets, address receiver) external {
+      vm.assume(receiver != address(0));
+      TestEnv memory env = _setupTestEnv(assets);
+      _fundAToken(env.amount, user);
+      IERC4626StataToken.SignatureParams memory sig;
+      vm.prank(user);
+      IERC20(aToken).approve(address(erc4626Upgradeable), env.amount);
+      vm.prank(user);
+      uint256 shares = erc4626Upgradeable.depositWithPermit(env.amount, receiver, block.timestamp + 1000, sig, false);
+
+      assertEq(erc4626Upgradeable.balanceOf(receiver), shares);
+      assertEq(IERC20(aToken).balanceOf(address(erc4626Upgradeable)), env.amount);
+      assertEq(IERC20(aToken).balanceOf(user), 0);
+  }
+
+  function test_depositWithPermit_underlying(uint128 assets, address receiver) external {
+      vm.assume(receiver != address(0));
+      TestEnv memory env = _setupTestEnv(assets);
+      _fundUnderlying(env.amount, user);
+
+      SigUtils.Permit memory permit = SigUtils.Permit({
+        owner: user,
+        spender: address(erc4626Upgradeable),
+        value: env.amount,
+        nonce: IERC20Permit(underlying).nonces(user),
+        deadline: block.timestamp + 100
+      });
+
+      bytes32 permitDigest = SigUtils.getTypedDataHash(
+        permit,
+        SigUtils.PERMIT_TYPEHASH,
+        IERC20Permit(underlying).DOMAIN_SEPARATOR()
+      );
+      (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey, permitDigest);
+      IERC4626StataToken.SignatureParams memory sig = IERC4626StataToken.SignatureParams(v,r,s);
+      vm.prank(user);
+      uint256 shares = erc4626Upgradeable.depositWithPermit(env.amount, receiver, permit.deadline, sig, true);
+
+      assertEq(erc4626Upgradeable.balanceOf(receiver), shares);
+      assertEq(IERC20(aToken).balanceOf(address(erc4626Upgradeable)), env.amount);
+      assertEq(IERC20(underlying).balanceOf(user), 0);
+  }
+
+  function test_depositWithPermit_aToken(uint128 assets, address receiver) external {
+      vm.assume(receiver != address(0));
+      TestEnv memory env = _setupTestEnv(assets);
+      _fundAToken(env.amount, user);
+
+      SigUtils.Permit memory permit = SigUtils.Permit({
+        owner: user,
+        spender: address(erc4626Upgradeable),
+        value: env.amount,
+        nonce: IERC20Permit(aToken).nonces(user),
+        deadline: block.timestamp + 100
+      });
+
+      bytes32 permitDigest = SigUtils.getTypedDataHash(
+        permit,
+        SigUtils.PERMIT_TYPEHASH,
+        IERC20Permit(aToken).DOMAIN_SEPARATOR()
+      );
+      (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey, permitDigest);
+      IERC4626StataToken.SignatureParams memory sig = IERC4626StataToken.SignatureParams(v,r,s);
+      vm.prank(user);
+      uint256 shares = erc4626Upgradeable.depositWithPermit(env.amount, receiver, permit.deadline, sig, false);
+
+      assertEq(erc4626Upgradeable.balanceOf(receiver), shares);
+      assertEq(IERC20(aToken).balanceOf(address(erc4626Upgradeable)), env.amount);
+      assertEq(IERC20(aToken).balanceOf(user), 0);
   }
 
   // ### REDEEM TESTS ###
@@ -271,16 +368,16 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
   }
 
   function test_maxRedeem_inSufficientAvailableLiquidity(uint256 amountToBorrow) public {
-    uint128 assets = 1 ether;
+    uint128 assets = 1e8;
     amountToBorrow = bound(amountToBorrow, 1, assets);
     uint256 shares = _fund4626(assets, user);
 
     // borrow out some assets
     address borrowUser = address(99);
     vm.startPrank(borrowUser);
-    deal(address(wbtc), borrowUser, 2_000e8);
-    wbtc.approve(address(contracts.poolProxy), 2_000e8);
-    contracts.poolProxy.deposit(address(wbtc), 2_000e8, borrowUser, 0);
+    deal(address(weth), borrowUser, 2_000 ether);
+    weth.approve(address(contracts.poolProxy), 2_000 ether);
+    contracts.poolProxy.deposit(address(weth), 2_000 ether, borrowUser, 0);
     contracts.poolProxy.borrow(underlying, amountToBorrow, 2, 0, borrowUser);
 
     uint256 max = erc4626Upgradeable.maxRedeem(address(user));

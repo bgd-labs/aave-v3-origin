@@ -17,7 +17,7 @@ contract StataTokenV2PermitTest is BaseTest {
 
     bytes32 permitDigest = SigUtils.getTypedDataHash(
       permit,
-      PERMIT_TYPEHASH,
+      SigUtils.PERMIT_TYPEHASH,
       stataTokenV2.DOMAIN_SEPARATOR()
     );
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey, permitDigest);
@@ -41,7 +41,7 @@ contract StataTokenV2PermitTest is BaseTest {
 
     bytes32 permitDigest = SigUtils.getTypedDataHash(
       permit,
-      PERMIT_TYPEHASH,
+      SigUtils.PERMIT_TYPEHASH,
       stataTokenV2.DOMAIN_SEPARATOR()
     );
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey, permitDigest);
@@ -66,7 +66,7 @@ contract StataTokenV2PermitTest is BaseTest {
 
     bytes32 permitDigest = SigUtils.getTypedDataHash(
       permit,
-      PERMIT_TYPEHASH,
+      SigUtils.PERMIT_TYPEHASH,
       stataTokenV2.DOMAIN_SEPARATOR()
     );
     (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey, permitDigest);
