@@ -89,7 +89,9 @@ abstract contract ERC4626StataTokenUpgradeable is ERC4626Upgradeable, IERC4626St
     SignatureParams memory sig,
     bool depositToAave
   ) public returns (uint256) {
-    IERC20Permit assetToDeposit = IERC20Permit(depositToAave ? asset() : address(_getERC4626StataTokenStorage()._aToken));
+    IERC20Permit assetToDeposit = IERC20Permit(
+      depositToAave ? asset() : address(_getERC4626StataTokenStorage()._aToken)
+    );
 
     try
       assetToDeposit.permit(_msgSender(), address(this), assets, deadline, sig.v, sig.r, sig.s)

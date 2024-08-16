@@ -4,8 +4,8 @@ pragma solidity ^0.8.10;
 import {IERC20AaveLM} from '../../src/periphery/contracts/static-a-token/interfaces/IERC20AaveLM.sol';
 
 library SigUtils {
-    bytes32 internal constant PERMIT_TYPEHASH =
-      keccak256('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)');
+  bytes32 internal constant PERMIT_TYPEHASH =
+    keccak256('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)');
 
   struct Permit {
     address owner;
