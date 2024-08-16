@@ -32,7 +32,7 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
   uint256 internal userPrivateKey;
 
   function setUp() public virtual {
-    initTestEnvironment();
+    initTestEnvironment(false);
 
     userPrivateKey = 0xA11CE;
     user = address(vm.addr(userPrivateKey));

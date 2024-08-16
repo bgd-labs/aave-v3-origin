@@ -2,22 +2,18 @@
 pragma solidity ^0.8.10;
 
 import {IERC20Metadata, IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol';
-import {IRewardsController} from '../../../src/periphery/contracts/rewards/interfaces/IRewardsController.sol';
-import {RewardsDataTypes} from '../../../src/periphery/contracts/rewards/libraries/RewardsDataTypes.sol';
-import {PullRewardsTransferStrategy} from '../../../src/periphery/contracts/rewards/transfer-strategies/PullRewardsTransferStrategy.sol';
-import {ITransferStrategyBase} from '../../../src/periphery/contracts/rewards/interfaces/ITransferStrategyBase.sol';
-import {IEACAggregatorProxy} from '../../../src/periphery/contracts/misc/interfaces/IEACAggregatorProxy.sol';
 import {TransparentUpgradeableProxy} from 'solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol';
 import {ITransparentProxyFactory} from 'solidity-utils/contracts/transparent-proxy/TransparentProxyFactory.sol';
-import {IPool} from '../../../src/core/contracts/interfaces/IPool.sol';
 import {StaticATokenFactory} from '../../../src/periphery/contracts/static-a-token/StaticATokenFactory.sol';
 import {StataTokenV2} from '../../../src/periphery/contracts/static-a-token/StataTokenV2.sol';
 import {IERC20AaveLM} from '../../../src/periphery/contracts/static-a-token/interfaces/IERC20AaveLM.sol';
-import {IAToken} from '../../../src/core/contracts/interfaces/IAToken.sol';
 import {TestnetProcedures, TestnetERC20} from '../../utils/TestnetProcedures.sol';
 import {DataTypes} from '../../../src/core/contracts/protocol/libraries/configuration/ReserveConfiguration.sol';
 
 abstract contract BaseTest is TestnetProcedures {
+  bytes32 internal constant PERMIT_TYPEHASH =
+    keccak256('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)');
+
   address constant OWNER = address(1234);
   address public constant EMISSION_ADMIN = address(25);
 
@@ -46,7 +42,7 @@ abstract contract BaseTest is TestnetProcedures {
     user1 = address(vm.addr(2));
     spender = vm.addr(spenderPrivateKey);
 
-    initTestEnvironment();
+    initTestEnvironment(false);
     DataTypes.ReserveDataLegacy memory reserveDataWETH = contracts.poolProxy.getReserveData(
       tokenList.weth
     );

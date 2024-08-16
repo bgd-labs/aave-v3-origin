@@ -62,7 +62,7 @@ contract ERC20AaveLMUpgradableTest is TestnetProcedures {
   PullRewardsTransferStrategy strategy;
 
   function setUp() public virtual {
-    initTestEnvironment();
+    initTestEnvironment(false);
 
     emissionAdmin = vm.addr(1024);
 
