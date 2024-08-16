@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface IStataTokenV2 {
+import {IERC4626StataToken} from './IERC4626StataToken.sol';
+import {IERC20AaveLM} from './IERC20AaveLM.sol';
+
+interface IStataTokenV2 is IERC4626StataToken, IERC20AaveLM {
   /**
    * @notice Checks if the passed actor is permissioned emergency admin.
    * @param actor The reward to claim
