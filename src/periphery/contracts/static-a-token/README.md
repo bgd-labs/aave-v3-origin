@@ -54,6 +54,8 @@ The implementation is seperated in two ERC20 extentions and one actual "merger" 
    In addition it adds a `latestAnswer` priceFeed, which returns the share price based on how aave prices the underlying.
 3. `StataTokenV2` is the main contract inheriting `ERC20AaveLM` and `ERC4626StataToken`, while also adding `Pausability`, `Rescuability`, `Permit` and the actual initialization.
 
+![inheritance graph](./inheritance.png)
+
 ### Libraries
 
 The previous `StaticATokenLM` relied on `WadRayMath` and `WadRayMathExplicitRounding` - a custom version where one can specify the rounding behavior - for math operations.
