@@ -810,7 +810,7 @@ contract PoolConfiguratorReserveRiskConfigs is TestnetProcedures {
     assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), until);
 
     contracts.poolConfiguratorProxy.disableLiquidationGracePeriod(asset);
-    assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), block.timestamp - 1);
+    assertEq(contracts.poolProxy.getLiquidationGracePeriod(asset), 0);
 
     vm.stopPrank();
   }

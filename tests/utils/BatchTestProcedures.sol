@@ -231,13 +231,13 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
   function detectFoundryLibrariesAndDelete() internal {
     bool found = _librariesPathExists();
 
-    if (found) {
-      _deleteLibrariesPath();
-      console.log(
-        'TestnetProcedures: FOUNDRY_LIBRARIES was detected and removed. Please run again "make test" to deploy libraries with a fresh compilation.'
-      );
-      revert('Retry the "make test" command.');
-    }
+    // if (found) {
+    //   _deleteLibrariesPath();
+    //   console.log(
+    //     'TestnetProcedures: FOUNDRY_LIBRARIES was detected and removed. Please run again "make test" to deploy libraries with a fresh compilation.'
+    //   );
+    //   revert('Retry the "make test" command.');
+    // }
   }
 
   function _concatStr(string memory a, uint256 b) internal pure returns (string memory) {

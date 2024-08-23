@@ -204,7 +204,7 @@ contract ATokenPermitTests is TestnetProcedures {
       spender: bob,
       value: 1e6,
       nonce: 0,
-      deadline: 1 days
+      deadline: block.timestamp + 1 days
     });
     bytes32 digest = EIP712SigUtils.getTypedDataHash(
       permit,
