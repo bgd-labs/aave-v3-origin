@@ -21,7 +21,7 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
   ITransparentProxyFactory public immutable TRANSPARENT_PROXY_FACTORY;
   address public immutable STATA_TOKEN_IMPL;
 
-  mapping(address => address) internal _underlyingToStaticAToken;
+  mapping(address => address) internal _underlyingToStataToken;
   address[] internal _stataTokens;
 
   event StataTokenCreated(address indexed stataToken, address indexed underlying);
@@ -44,7 +44,7 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
   function createStataTokens(address[] memory underlyings) external returns (address[] memory) {
     address[] memory stataTokens = new address[](underlyings.length);
     for (uint256 i = 0; i < underlyings.length; i++) {
-      address cachedStataToken = _underlyingToStaticAToken[underlyings[i]];
+      address cachedStataToken = _underlyingToStataToken[underlyings[i]];
       if (cachedStataToken == address(0)) {
         DataTypes.ReserveDataLegacy memory reserveData = POOL.getReserveData(underlyings[i]);
         if (reserveData.aTokenAddress == address(0))
@@ -68,7 +68,7 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
           bytes32(uint256(uint160(underlyings[i])))
         );
 
-        _underlyingToStaticAToken[underlyings[i]] = stataToken;
+        _underlyingToStataToken[underlyings[i]] = stataToken;
         stataTokens[i] = stataToken;
         _stataTokens.push(stataToken);
         emit StataTokenCreated(stataToken, underlyings[i]);
@@ -86,6 +86,6 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
 
   ///@inheritdoc IStataTokenFactory
   function getStataToken(address underlying) external view returns (address) {
-    return _underlyingToStaticAToken[underlying];
+    return _underlyingToStataToken[underlying];
   }
 }
