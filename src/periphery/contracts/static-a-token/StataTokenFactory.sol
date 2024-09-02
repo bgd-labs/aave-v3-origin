@@ -22,7 +22,7 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
   address public immutable STATA_TOKEN_IMPL;
 
   mapping(address => address) internal _underlyingToStataToken;
-  address[] internal _stataTokens;
+  TokenPair[] internal _tokenPairs;
 
   event StataTokenCreated(address indexed stataToken, address indexed underlying);
 
@@ -70,7 +70,7 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
 
         _underlyingToStataToken[underlyings[i]] = stataToken;
         stataTokens[i] = stataToken;
-        _stataTokens.push(stataToken);
+        _tokenPairs.push(TokenPair({stataToken: stataToken, underlying: underlyings[i]}));
         emit StataTokenCreated(stataToken, underlyings[i]);
       } else {
         stataTokens[i] = cachedStataToken;
@@ -80,8 +80,8 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
   }
 
   ///@inheritdoc IStataTokenFactory
-  function getStataTokens() external view returns (address[] memory) {
-    return _stataTokens;
+  function getTokenPairs() external view returns (TokenPair[] memory) {
+    return _tokenPairs;
   }
 
   ///@inheritdoc IStataTokenFactory
