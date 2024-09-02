@@ -44,8 +44,8 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
   function createStataTokens(address[] memory underlyings) external returns (address[] memory) {
     address[] memory stataTokens = new address[](underlyings.length);
     for (uint256 i = 0; i < underlyings.length; i++) {
-      address cachedStaticAToken = _underlyingToStaticAToken[underlyings[i]];
-      if (cachedStaticAToken == address(0)) {
+      address cachedStataToken = _underlyingToStaticAToken[underlyings[i]];
+      if (cachedStataToken == address(0)) {
         DataTypes.ReserveDataLegacy memory reserveData = POOL.getReserveData(underlyings[i]);
         if (reserveData.aTokenAddress == address(0))
           revert NotListedUnderlying(reserveData.aTokenAddress);
@@ -73,7 +73,7 @@ contract StataTokenFactory is Initializable, IStataTokenFactory {
         _stataTokens.push(stataToken);
         emit StataTokenCreated(stataToken, underlyings[i]);
       } else {
-        stataTokens[i] = cachedStaticAToken;
+        stataTokens[i] = cachedStataToken;
       }
     }
     return stataTokens;
