@@ -262,12 +262,6 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
   ) internal returns (MarketReport memory testReport) {
     detectFoundryLibrariesAndDelete();
 
-    // Etch the create2 factory
-    vm.etch(
-      0x914d7Fec6aaC8cd542e72Bca78B30650d45643d7,
-      hex'7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf3'
-    );
-
     vm.startPrank(deployer);
     MarketReport memory deployReport = AaveV3BatchOrchestration.deployAaveV3(
       deployer,

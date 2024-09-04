@@ -72,12 +72,6 @@ contract DeploymentsGasLimits is BatchTestProcedures {
     );
     flags = DeployFlags(true);
 
-    // Etch the create2 factory
-    vm.etch(
-      0x914d7Fec6aaC8cd542e72Bca78B30650d45643d7,
-      hex'7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf3'
-    );
-
     (
       marketReportOne,
       gettersReportOne,
