@@ -6,11 +6,13 @@ import '../../src/deployments/interfaces/IMarketReportTypes.sol';
 import {DeployUtils} from '../../src/deployments/contracts/utilities/DeployUtils.sol';
 import {AaveV3GettersBatchOne} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3GettersBatchOne.sol';
 import {AaveV3GettersBatchTwo} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3GettersBatchTwo.sol';
+import {AaveV3TokensBatch} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3TokensBatch.sol';
 import {AaveV3SetupBatch} from '../../src/deployments/projects/aave-v3-batched/batches/AaveV3SetupBatch.sol';
 import {FfiUtils} from '../../src/deployments/contracts/utilities/FfiUtils.sol';
 import {DefaultMarketInput} from '../../src/deployments/inputs/DefaultMarketInput.sol';
 import {AaveV3BatchOrchestration} from '../../src/deployments/projects/aave-v3-batched/AaveV3BatchOrchestration.sol';
 import {IPoolAddressesProvider} from 'aave-v3-core/contracts/interfaces/IPoolAddressesProvider.sol';
+import {IRewardsController} from 'aave-v3-periphery/contracts/rewards/interfaces/IRewardsController.sol';
 import {ACLManager} from 'aave-v3-core/contracts/protocol/configuration/ACLManager.sol';
 import {WETH9} from 'aave-v3-core/contracts/dependencies/weth/WETH9.sol';
 import 'aave-v3-periphery/contracts/mocks/testnet-helpers/TestnetERC20.sol';
@@ -62,7 +64,7 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       AaveV3GettersBatchOne.GettersReportBatchOne memory gettersReport1,
       PoolReport memory poolReport,
       PeripheryReport memory peripheryReport,
-      ParaswapReport memory paraswapReport,
+      MiscReport memory miscReport,
       AaveV3SetupBatch setupContract
     )
   {
@@ -91,21 +93,14 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       address(setupContract)
     );
 
-    paraswapReport = AaveV3BatchOrchestration._deployParaswapAdapters(
-      roles,
-      config,
+    miscReport = AaveV3BatchOrchestration._deployMisc(
+      flags.l2,
       initialReport.poolAddressesProvider,
-      peripheryReport.treasury
+      config.l2SequencerUptimeFeed,
+      config.l2PriceOracleSentinelGracePeriod
     );
 
-    return (
-      initialReport,
-      gettersReport1,
-      poolReport,
-      peripheryReport,
-      paraswapReport,
-      setupContract
-    );
+    return (initialReport, gettersReport1, poolReport, peripheryReport, miscReport, setupContract);
   }
 
   function deployAndSetup(
@@ -122,6 +117,8 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       PoolReport memory poolReport,
       SetupReport memory setupReport,
       PeripheryReport memory peripheryReport,
+      MiscReport memory miscReport,
+      AaveV3TokensBatch.TokensReport memory tokensReport,
       ParaswapReport memory paraswapReport,
       AaveV3SetupBatch setupContract
     )
@@ -131,7 +128,7 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       gettersReport1,
       poolReport,
       peripheryReport,
-      paraswapReport,
+      miscReport,
       setupContract
     ) = deployCoreAndPeriphery(roles, config, flags, deployedContracts);
 
@@ -143,7 +140,15 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       poolReport.poolConfiguratorImplementation,
       gettersReport1.protocolDataProvider,
       peripheryReport.aaveOracle,
-      peripheryReport.rewardsControllerImplementation
+      peripheryReport.rewardsControllerImplementation,
+      miscReport.priceOracleSentinel
+    );
+
+    paraswapReport = AaveV3BatchOrchestration._deployParaswapAdapters(
+      roles,
+      config,
+      initialReport.poolAddressesProvider,
+      peripheryReport.treasury
     );
 
     gettersReport2 = AaveV3BatchOrchestration._deployGettersBatch2(
@@ -153,6 +158,8 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       flags.l2
     );
 
+    tokensReport = AaveV3BatchOrchestration._deployTokens(setupReport.poolProxy);
+
     return (
       initialReport,
       gettersReport1,
@@ -160,12 +167,18 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       poolReport,
       setupReport,
       peripheryReport,
+      miscReport,
+      tokensReport,
       paraswapReport,
       setupContract
     );
   }
 
-  function checkFullReport(DeployFlags memory flags, MarketReport memory r) internal pure {
+  function checkFullReport(
+    MarketConfig memory config,
+    DeployFlags memory flags,
+    MarketReport memory r
+  ) internal view {
     assertTrue(r.poolAddressesProviderRegistry != address(0), 'r.poolAddressesProviderRegistry');
     assertTrue(r.poolAddressesProvider != address(0), 'report.poolAddressesProvider');
     assertTrue(r.poolProxy != address(0), 'report.poolProxy');
@@ -174,14 +187,16 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     assertTrue(r.poolConfiguratorImplementation != address(0), 'r.poolConfiguratorImplementation');
     assertTrue(r.protocolDataProvider != address(0), 'report.protocolDataProvider');
     assertTrue(r.aaveOracle != address(0), 'report.aaveOracle');
-    assertTrue(
-      r.defaultInterestRateStrategyV2 != address(0),
-      'report.defaultInterestRateStrategyV2'
-    );
+    assertTrue(r.defaultInterestRateStrategy != address(0), 'report.defaultInterestRateStrategy');
     assertTrue(r.aclManager != address(0), 'report.aclManager');
-    assertTrue(r.treasury != address(0), 'report.treasury');
     assertTrue(r.proxyAdmin != address(0), 'report.proxyAdmin');
-    assertTrue(r.treasuryImplementation != address(0), 'report.treasuryImplementation');
+    if (config.treasury == address(0)) {
+      assertTrue(r.treasury != address(0), 'report.treasury');
+      assertTrue(r.treasuryImplementation != address(0), 'report.treasuryImplementation');
+    } else {
+      assertTrue(r.treasury == config.treasury, 'report.treasury');
+      assertTrue(r.treasuryImplementation == address(0), 'report.treasuryImplementation');
+    }
     assertTrue(r.wrappedTokenGateway != address(0), 'report.wrappedTokenGateway');
     assertTrue(r.walletBalanceProvider != address(0), 'report.walletBalanceProvider');
     assertTrue(r.uiIncentiveDataProvider != address(0), 'report.uiIncentiveDataProvider');
@@ -193,17 +208,49 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
 
     if (flags.l2) {
       assertTrue(r.l2Encoder != address(0), 'report.l2Encoder');
+      assertTrue(r.priceOracleSentinel != address(0), 'report.priceOracleSentinel');
     }
 
     assertTrue(r.aToken != address(0), 'report.aToken');
     assertTrue(r.variableDebtToken != address(0), 'report.variableDebtToken');
     assertTrue(r.stableDebtToken != address(0), 'report.stableDebtToken');
+
     assertTrue(r.emissionManager != address(0), 'report.emissionManager');
-    assertTrue(
-      r.rewardsControllerImplementation != address(0),
-      'r.rewardsControllerImplementation'
-    );
     assertTrue(r.rewardsControllerProxy != address(0), 'report.rewardsControllerProxy');
+
+    if (config.incentivesProxy == address(0)) {
+      assertTrue(
+        r.rewardsControllerImplementation != address(0),
+        'r.rewardsControllerImplementation'
+      );
+    } else {
+      assertEq(
+        r.emissionManager,
+        IRewardsController(config.incentivesProxy).getEmissionManager(),
+        'report.emissionManager should match RewardsController(config.incentivesProxy).getEmissionManager()'
+      );
+      assertTrue(
+        r.rewardsControllerImplementation == address(0),
+        'r.rewardsControllerImplementation should be empty if incentivesProxy is set'
+      );
+      assertEq(
+        r.rewardsControllerProxy,
+        config.incentivesProxy,
+        'r.rewardsControllerProxy should match config input'
+      );
+    }
+    assertTrue(r.configEngine != address(0), 'report.configEngine');
+    assertTrue(
+      r.staticATokenFactoryImplementation != address(0),
+      'report.staticATokenFactoryImplementation'
+    );
+    assertTrue(r.staticATokenFactoryProxy != address(0), 'report.staticATokenFactoryProxy');
+    assertTrue(r.staticATokenImplementation != address(0), 'report.staticATokenImplementation');
+    assertTrue(r.transparentProxyFactory != address(0), 'report.transparentProxyFactory');
+
+    if (config.treasuryPartner != address(0)) {
+      assertTrue(r.revenueSplitter != address(0), 'report.revenueSplitter');
+    }
   }
 
   function deployAaveV3Testnet(
@@ -214,6 +261,12 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
     MarketReport memory deployedContracts
   ) internal returns (MarketReport memory testReport) {
     detectFoundryLibrariesAndDelete();
+
+    // Etch the create2 factory
+    vm.etch(
+      0x914d7Fec6aaC8cd542e72Bca78B30650d45643d7,
+      hex'7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe03601600081602082378035828234f58015156039578182fd5b8082525050506014600cf3'
+    );
 
     vm.startPrank(deployer);
     MarketReport memory deployReport = AaveV3BatchOrchestration.deployAaveV3(
@@ -266,7 +319,7 @@ contract BatchTestProcedures is Test, DeployUtils, FfiUtils, DefaultMarketInput 
       t.variableDebtSymbol = _concatStr('varDebtMISC ', x);
       t.stableDebtName = _concatStr('Stable Debt Misc ', x);
       t.stableDebtSymbol = _concatStr('stableDebtMISC ', x);
-      t.rateStrategy = r.defaultInterestRateStrategyV2;
+      t.rateStrategy = r.defaultInterestRateStrategy;
       t.interestRateData = abi.encode(
         IDefaultInterestRateStrategyV2.InterestRateData({
           optimalUsageRatio: 80_00,
