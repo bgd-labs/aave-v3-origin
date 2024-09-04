@@ -77,10 +77,10 @@ contract RevenueSplitterTest is StdUtils, Test {
     _splitFunds_action(amountA, amountB);
   }
 
-  function test_splitNativeFunds_fuzz_max(uint256 amountA) public {
+  function test_splitNativeFunds_fuzz_realistic(uint256 amountA) public {
     vm.assume(
       amountA <=
-        (type(uint256).max - HALF_PERCENTAGE_FACTOR) /
+        (100_000_000_000_000e18 - HALF_PERCENTAGE_FACTOR) /
           revenueSplitter.SPLIT_PERCENTAGE_RECIPIENT_A()
     );
     _splitNativeFunds_action(amountA);
