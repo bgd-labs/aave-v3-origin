@@ -92,7 +92,7 @@ library SigUtils {
     Permit memory permit,
     bytes32 typehash,
     bytes32 domainSeparator
-  ) public pure returns (bytes32) {
+  ) internal pure returns (bytes32) {
     return
       keccak256(abi.encodePacked('\x19\x01', domainSeparator, getStructHash(permit, typehash)));
   }
@@ -101,7 +101,7 @@ library SigUtils {
     WithdrawPermit memory permit,
     bytes32 typehash,
     bytes32 domainSeparator
-  ) public pure returns (bytes32) {
+  ) internal pure returns (bytes32) {
     return
       keccak256(abi.encodePacked('\x19\x01', domainSeparator, getWithdrawHash(permit, typehash)));
   }
@@ -110,7 +110,7 @@ library SigUtils {
     DepositPermit memory permit,
     bytes32 typehash,
     bytes32 domainSeparator
-  ) public pure returns (bytes32) {
+  ) internal pure returns (bytes32) {
     return
       keccak256(abi.encodePacked('\x19\x01', domainSeparator, getDepositHash(permit, typehash)));
   }
