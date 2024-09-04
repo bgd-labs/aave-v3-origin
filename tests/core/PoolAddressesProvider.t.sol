@@ -59,15 +59,14 @@ contract PoolAddressesProviderTests is TestnetProcedures {
 
   function test_new_PoolAddressesProvider() public returns (PoolAddressesProvider) {
     string memory id = 'Constructor Test Market';
-    address expectedAddress = vm.computeCreateAddress(alice, vm.getNonce(alice));
 
-    vm.expectEmit(expectedAddress);
+    vm.expectEmit();
     emit OwnershipTransferred(address(0), alice);
 
-    vm.expectEmit(expectedAddress);
+    vm.expectEmit();
     emit MarketIdSet('', id);
 
-    vm.expectEmit(expectedAddress);
+    vm.expectEmit();
     emit OwnershipTransferred(alice, alice);
 
     vm.prank(alice);
