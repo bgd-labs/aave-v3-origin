@@ -495,6 +495,65 @@ contract PoolRepayTests is TestnetProcedures {
     );
   }
 
+  function test_full_repay_multipleSupplyBorrow_shouldNotResetBitmap() public {
+    uint256 wethBalance = IERC20(tokenList.weth).balanceOf(alice);
+    uint256 usdxBalance = IERC20(tokenList.usdx).balanceOf(alice);
+    uint256 wbtcBalance = IERC20(tokenList.wbtc).balanceOf(alice);
+
+    vm.startPrank(alice);
+    // supply
+    contracts.poolProxy.supply(tokenList.weth, wethBalance, alice, 0);
+    contracts.poolProxy.supply(tokenList.usdx, usdxBalance, alice, 0);
+    contracts.poolProxy.supply(tokenList.wbtc, wbtcBalance, alice, 0);
+
+    // borrow
+    contracts.poolProxy.borrow(tokenList.weth, wethBalance / 2, 2, 0, alice);
+    contracts.poolProxy.borrow(tokenList.usdx, usdxBalance / 2, 2, 0, alice);
+    contracts.poolProxy.borrow(tokenList.wbtc, wbtcBalance / 2, 2, 0, alice);
+    vm.warp(block.timestamp + 10 days);
+
+    contracts.poolProxy.repayWithATokens(tokenList.usdx, UINT256_MAX, 2);
+
+    assertEq(
+      contracts.poolProxy.getUserConfiguration(alice).isBorrowing(
+        contracts.poolProxy.getReserveData(tokenList.usdx).id
+      ),
+      false
+    );
+    assertEq(
+      contracts.poolProxy.getUserConfiguration(alice).isUsingAsCollateral(
+        contracts.poolProxy.getReserveData(tokenList.usdx).id
+      ),
+      true
+    );
+
+    assertEq(
+      contracts.poolProxy.getUserConfiguration(alice).isBorrowing(
+        contracts.poolProxy.getReserveData(tokenList.weth).id
+      ),
+      true
+    );
+    assertEq(
+      contracts.poolProxy.getUserConfiguration(alice).isUsingAsCollateral(
+        contracts.poolProxy.getReserveData(tokenList.weth).id
+      ),
+      true
+    );
+
+    assertEq(
+      contracts.poolProxy.getUserConfiguration(alice).isBorrowing(
+        contracts.poolProxy.getReserveData(tokenList.wbtc).id
+      ),
+      true
+    );
+    assertEq(
+      contracts.poolProxy.getUserConfiguration(alice).isUsingAsCollateral(
+        contracts.poolProxy.getReserveData(tokenList.wbtc).id
+      ),
+      true
+    );
+  }
+
   function test_reverts_borrow_invalidAmount() public {
     vm.expectRevert(bytes(Errors.INVALID_AMOUNT));
 
