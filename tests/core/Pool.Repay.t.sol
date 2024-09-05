@@ -508,11 +508,10 @@ contract PoolRepayTests is TestnetProcedures {
 
     // borrow
     contracts.poolProxy.borrow(tokenList.weth, wethBalance / 2, 2, 0, alice);
-    contracts.poolProxy.borrow(tokenList.usdx, usdxBalance / 2, 2, 0, alice);
     contracts.poolProxy.borrow(tokenList.wbtc, wbtcBalance / 2, 2, 0, alice);
-    vm.warp(block.timestamp + 10 days);
+    contracts.poolProxy.borrow(tokenList.usdx, usdxBalance, 2, 0, alice);
 
-    contracts.poolProxy.repayWithATokens(tokenList.usdx, UINT256_MAX, 2);
+    contracts.poolProxy.repay(tokenList.usdx, UINT256_MAX, 2, alice);
 
     assertEq(
       contracts.poolProxy.getUserConfiguration(alice).isBorrowing(
