@@ -11,13 +11,13 @@ contract PoolHandler is Test {
   TestnetProcedures.TokenList internal tokens;
   ContractsReport internal contracts;
 
-  uint256 internal supplySuccessCalls;
-  uint256 internal borrowSuccessCalls;
-  uint256 internal borrowFailCalls;
-  uint256 internal withdrawSuccessCalls;
-  uint256 internal withdrawFailCalls;
-  uint256 internal repaySuccessCalls;
-  uint256 internal repayFailCalls;
+  mapping(address => uint256) internal supplySuccessCalls;
+  mapping(address => uint256) internal borrowSuccessCalls;
+  mapping(address => uint256) internal borrowFailCalls;
+  mapping(address => uint256) internal withdrawSuccessCalls;
+  mapping(address => uint256) internal withdrawFailCalls;
+  mapping(address => uint256) internal repaySuccessCalls;
+  mapping(address => uint256) internal repayFailCalls;
 
   struct UserPositionUsd {
     uint256 usdxCollateralUsd;
@@ -52,7 +52,7 @@ contract PoolHandler is Test {
 
     contracts.poolProxy.supply(token, amount, user, 0);
 
-    supplySuccessCalls++;
+    supplySuccessCalls[token]++;
     vm.stopPrank();
   }
 
@@ -63,11 +63,11 @@ contract PoolHandler is Test {
 
     if (_validateAmountToBorrow(token, amount)) {
       contracts.poolProxy.borrow(token, amount, 2, 0, user);
-      borrowSuccessCalls++;
+      borrowSuccessCalls[token]++;
     } else {
       vm.expectRevert();
       contracts.poolProxy.borrow(token, amount, 2, 0, user);
-      borrowFailCalls++;
+      borrowFailCalls[token]++;
     }
 
     vm.stopPrank();
@@ -81,11 +81,11 @@ contract PoolHandler is Test {
 
     if (_validateAmountToWithdraw(token, amount)) {
       contracts.poolProxy.withdraw(token, amount, user);
-      withdrawSuccessCalls++;
+      withdrawSuccessCalls[token]++;
     } else {
       vm.expectRevert();
       contracts.poolProxy.withdraw(token, amount, user);
-      withdrawFailCalls++;
+      withdrawFailCalls[token]++;
     }
 
     vm.stopPrank();
@@ -101,11 +101,11 @@ contract PoolHandler is Test {
 
     if (_validateAmountToRepay(token)) {
       contracts.poolProxy.repay(token, amount, 2, user);
-      repaySuccessCalls++;
+      repaySuccessCalls[token]++;
     } else {
       vm.expectRevert();
       contracts.poolProxy.repay(token, amount, 2, user);
-      repayFailCalls++;
+      repayFailCalls[token]++;
     }
 
     vm.stopPrank();
@@ -133,27 +133,47 @@ contract PoolHandler is Test {
     (address aToken, ,) = contracts.protocolDataProvider.getReserveTokensAddresses(token);
     uint256 amountToWithdrawUsd = (amountToWithdraw * tokenPrice) / 10 ** IERC20Metadata(token).decimals();
 
+    // user has not supplied enough token to withdraw
+    if (IERC20(aToken).balanceOf(user) < amountToWithdraw) return false;
     (uint256 usdxLt, uint256 wethLt, uint256 wbtcLt) = _getLT();
 
-    uint256 totalWithdrawableAmountInUsd = (
-        ((token == tokens.usdx && (userPosition.usdxCollateralUsd > (amountToWithdrawUsd))) ? (userPosition.usdxCollateralUsd - (amountToWithdrawUsd)) * usdxLt : userPosition.usdxCollateralUsd * usdxLt) +
-        ((token == tokens.weth && (userPosition.wethCollateralUsd > (amountToWithdrawUsd))) ? (userPosition.wethCollateralUsd - (amountToWithdrawUsd)) * wethLt : userPosition.wethCollateralUsd * wethLt) +
-        ((token == tokens.wbtc && (userPosition.wbtcCollateralUsd > (amountToWithdrawUsd))) ? (userPosition.wbtcCollateralUsd - (amountToWithdrawUsd)) * wbtcLt : userPosition.wbtcCollateralUsd * wbtcLt)
-      ) / 10 ** LT_DECIMALS;
-    return (totalWithdrawableAmountInUsd > (userPosition.usdxBorrowsUsd + userPosition.wethBorrowsUsd + userPosition.wbtcBorrowsUsd)) && (IERC20(token).balanceOf(aToken) >= amountToWithdraw);
+    if (token == tokens.usdx) {
+      userPosition.usdxCollateralUsd = userPosition.usdxCollateralUsd - amountToWithdrawUsd;
+    } else if (token == tokens.weth) {
+      userPosition.wethCollateralUsd = userPosition.wethCollateralUsd - amountToWithdrawUsd;
+    } else if (token == tokens.wbtc) {
+      userPosition.wbtcCollateralUsd = userPosition.wbtcCollateralUsd - amountToWithdrawUsd;
+    }
+    uint256 totalDebtInUsd = userPosition.usdxBorrowsUsd + userPosition.wethBorrowsUsd + userPosition.wbtcBorrowsUsd;
+    uint256 totalWithdrawableAmountInUsd = ((userPosition.usdxCollateralUsd * usdxLt) + (userPosition.wethCollateralUsd * wethLt) + (userPosition.wbtcCollateralUsd * wbtcLt)) / 10 ** LT_DECIMALS;
+
+    return (totalWithdrawableAmountInUsd > totalDebtInUsd) && (IERC20(token).balanceOf(aToken) >= amountToWithdraw);
   }
 
   function summary() external view {
-    console.log("Supply Success Calls: %s", supplySuccessCalls);
-
-    console.log("Borrow Success Calls: %s", borrowSuccessCalls);
-    console.log("Borrow Success Calls: %s", borrowFailCalls);
-
-    console.log("Withdraw Success Calls: %s", withdrawSuccessCalls);
-    console.log("Withdraw Success Calls: %s", withdrawFailCalls);
-
-    console.log("Repay Success Calls: %s", repaySuccessCalls);
-    console.log("Repay Success Calls: %s", repayFailCalls);
+    console.log("Supply Success Calls USDX: %s", supplySuccessCalls[tokens.usdx]);
+    console.log("Borrow Success Calls USDX: %s", borrowSuccessCalls[tokens.usdx]);
+    console.log("Borrow Fail Calls USDX: %s", borrowFailCalls[tokens.usdx]);
+    console.log("Withdraw Success Calls USDX: %s", withdrawSuccessCalls[tokens.usdx]);
+    console.log("Withdraw Fail Calls USDX: %s", withdrawFailCalls[tokens.usdx]);
+    console.log("Repay Success Calls USDX: %s", repaySuccessCalls[tokens.usdx]);
+    console.log("Repay Fail Calls USDX: %s", repayFailCalls[tokens.usdx]);
+    console.log();
+    console.log("Supply Success Calls WETH: %s", supplySuccessCalls[tokens.weth]);
+    console.log("Borrow Success Calls WETH: %s", borrowSuccessCalls[tokens.weth]);
+    console.log("Borrow Fail Calls WETH: %s", borrowFailCalls[tokens.weth]);
+    console.log("Withdraw Success Calls WETH: %s", withdrawSuccessCalls[tokens.weth]);
+    console.log("Withdraw Fail Calls WETH: %s", withdrawFailCalls[tokens.weth]);
+    console.log("Repay Success Calls WETH: %s", repaySuccessCalls[tokens.weth]);
+    console.log("Repay Fail Calls WETH: %s", repayFailCalls[tokens.weth]);
+    console.log();
+    console.log("Supply Success Calls WBTC: %s", supplySuccessCalls[tokens.wbtc]);
+    console.log("Borrow Success Calls WBTC: %s", borrowSuccessCalls[tokens.wbtc]);
+    console.log("Borrow Fail Calls WBTC: %s", borrowFailCalls[tokens.wbtc]);
+    console.log("Withdraw Success Calls WBTC: %s", withdrawSuccessCalls[tokens.wbtc]);
+    console.log("Withdraw Fail Calls WBTC: %s", withdrawFailCalls[tokens.wbtc]);
+    console.log("Repay Success Calls WBTC: %s", repaySuccessCalls[tokens.wbtc]);
+    console.log("Repay Fail Calls WBTC: %s", repayFailCalls[tokens.wbtc]);
   }
 
   // @dev returns true if the user has some debt for the token
