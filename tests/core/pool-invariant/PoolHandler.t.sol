@@ -28,6 +28,10 @@ contract PoolHandler is Test {
     uint256 wbtcBorrowsUsd;
   }
 
+  uint256 LT_DECIMALS = 4;
+  uint256 UPPER_BOUND_FUZZED_INPUT = 100_000_000_000 ether;
+  uint256 LOWER_BOUND_FUZZED_INPUT = 1e6;
+
   constructor(
     address _user,
     TestnetProcedures.TokenList memory _tokenList,
@@ -39,7 +43,7 @@ contract PoolHandler is Test {
   }
 
   function supply(uint8 tokenIndex, uint128 amount) public {
-    vm.assume(amount > 1e6 && amount < 100_000_000_000 ether);
+    vm.assume(amount > LOWER_BOUND_FUZZED_INPUT && amount < UPPER_BOUND_FUZZED_INPUT);
     vm.startPrank(user);
     address token = _getTokenAddressFromIndex(tokenIndex);
 
@@ -53,7 +57,7 @@ contract PoolHandler is Test {
   }
 
   function borrow(uint8 tokenIndex, uint128 amount) public {
-    vm.assume(amount > 1e6);
+    vm.assume(amount > LOWER_BOUND_FUZZED_INPUT);
     vm.startPrank(user);
     address token = _getTokenAddressFromIndex(tokenIndex);
 
@@ -70,7 +74,8 @@ contract PoolHandler is Test {
   }
 
   function withdraw(uint8 tokenIndex, uint128 amount) public {
-    vm.assume(amount > 1e6);
+    vm.assume(amount > LOWER_BOUND_FUZZED_INPUT);
+
     vm.startPrank(user);
     address token = _getTokenAddressFromIndex(tokenIndex);
 
@@ -108,10 +113,7 @@ contract PoolHandler is Test {
 
   function _validateAmountToBorrow(address token, uint256 amountToBorrow) internal view returns (bool) {
     UserPositionUsd memory userPosition = _getUserCollateralAndDebtInUsd();
-
-    ( ,uint256 usdxLtv,,,,,,,,) = contracts.protocolDataProvider.getReserveConfigurationData(tokens.usdx);
-    ( ,uint256 wethLtv,,,,,,,,) = contracts.protocolDataProvider.getReserveConfigurationData(tokens.weth);
-    ( ,uint256 wbtcLtv,,,,,,,,) = contracts.protocolDataProvider.getReserveConfigurationData(tokens.wbtc);
+    (uint256 usdxLtv, uint256 wethLtv, uint256 wbtcLtv) = _getLTV();
 
     uint256 totalBorrowableAmountInUsd = ((userPosition.usdxCollateralUsd * usdxLtv) + (userPosition.wethCollateralUsd * wethLtv) + (userPosition.wbtcCollateralUsd * wbtcLtv)) / 10000;
     uint256 totalDebtInUsd = userPosition.usdxBorrowsUsd + userPosition.wethBorrowsUsd + userPosition.wbtcBorrowsUsd;
@@ -126,19 +128,18 @@ contract PoolHandler is Test {
 
   function _validateAmountToWithdraw(address token,  uint256 amountToWithdraw) internal view returns (bool) {
     UserPositionUsd memory userPosition = _getUserCollateralAndDebtInUsd();
+
     uint256 tokenPrice = contracts.aaveOracle.getAssetPrice(token);
     (address aToken, ,) = contracts.protocolDataProvider.getReserveTokensAddresses(token);
     uint256 amountToWithdrawUsd = (amountToWithdraw * tokenPrice) / 10 ** IERC20Metadata(token).decimals();
 
-    (,, uint256 usdxLT,,,,,,,) = contracts.protocolDataProvider.getReserveConfigurationData(tokens.usdx);
-    (,, uint256 wethLT,,,,,,,) = contracts.protocolDataProvider.getReserveConfigurationData(tokens.weth);
-    (,, uint256 wbtcLT,,,,,,,) = contracts.protocolDataProvider.getReserveConfigurationData(tokens.wbtc);
+    (uint256 usdxLt, uint256 wethLt, uint256 wbtcLt) = _getLT();
 
     uint256 totalWithdrawableAmountInUsd = (
-        ((token == tokens.usdx && (userPosition.usdxCollateralUsd > (amountToWithdrawUsd))) ? (userPosition.usdxCollateralUsd - (amountToWithdrawUsd)) * usdxLT : userPosition.usdxCollateralUsd * usdxLT) +
-        ((token == tokens.weth && (userPosition.wethCollateralUsd > (amountToWithdrawUsd))) ? (userPosition.wethCollateralUsd - (amountToWithdrawUsd)) * wethLT : userPosition.wethCollateralUsd * wethLT) +
-        ((token == tokens.wbtc && (userPosition.wbtcCollateralUsd > (amountToWithdrawUsd))) ? (userPosition.wbtcCollateralUsd - (amountToWithdrawUsd)) * wbtcLT : userPosition.wbtcCollateralUsd * wbtcLT)
-      ) / 10000;
+        ((token == tokens.usdx && (userPosition.usdxCollateralUsd > (amountToWithdrawUsd))) ? (userPosition.usdxCollateralUsd - (amountToWithdrawUsd)) * usdxLt : userPosition.usdxCollateralUsd * usdxLt) +
+        ((token == tokens.weth && (userPosition.wethCollateralUsd > (amountToWithdrawUsd))) ? (userPosition.wethCollateralUsd - (amountToWithdrawUsd)) * wethLt : userPosition.wethCollateralUsd * wethLt) +
+        ((token == tokens.wbtc && (userPosition.wbtcCollateralUsd > (amountToWithdrawUsd))) ? (userPosition.wbtcCollateralUsd - (amountToWithdrawUsd)) * wbtcLt : userPosition.wbtcCollateralUsd * wbtcLt)
+      ) / 10 ** LT_DECIMALS;
     return (totalWithdrawableAmountInUsd > (userPosition.usdxBorrowsUsd + userPosition.wethBorrowsUsd + userPosition.wbtcBorrowsUsd)) && (IERC20(token).balanceOf(aToken) >= amountToWithdraw);
   }
 
@@ -155,6 +156,7 @@ contract PoolHandler is Test {
     console.log("Repay Success Calls: %s", repayFailCalls);
   }
 
+  // @dev returns true if the user has some debt for the token
   function _validateAmountToRepay(address token) internal view returns (bool) {
     (,,address variableDebtToken) = contracts.protocolDataProvider.getReserveTokensAddresses(token);
     if (IERC20(variableDebtToken).balanceOf(user) != 0) {
@@ -183,7 +185,19 @@ contract PoolHandler is Test {
     return userPosition;
   }
 
-  // used to get random asset
+  function _getLT() internal view returns (uint256 usdxLt, uint256 wethLt, uint256 wbtcLt) {
+    (,, usdxLt,,,,,,,) = contracts.protocolDataProvider.getReserveConfigurationData(tokens.usdx);
+    (,, wethLt,,,,,,,) = contracts.protocolDataProvider.getReserveConfigurationData(tokens.weth);
+    (,, wbtcLt,,,,,,,) = contracts.protocolDataProvider.getReserveConfigurationData(tokens.wbtc);
+  }
+
+  function _getLTV() internal view returns (uint256 usdxLtv, uint256 wethLtv, uint256 wbtcLtv) {
+    (,usdxLtv,,,,,,,,) = contracts.protocolDataProvider.getReserveConfigurationData(tokens.usdx);
+    (,wethLtv,,,,,,,,) = contracts.protocolDataProvider.getReserveConfigurationData(tokens.weth);
+    (,wbtcLtv,,,,,,,,) = contracts.protocolDataProvider.getReserveConfigurationData(tokens.wbtc);
+  }
+
+  // to get random asset from index
   function _getTokenAddressFromIndex(uint8 tokenIndex) internal view returns (address) {
     address[3] memory tokensArray = [tokens.usdx, tokens.weth, tokens.wbtc];
     tokenIndex = tokenIndex % 3;
