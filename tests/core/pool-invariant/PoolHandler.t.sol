@@ -49,7 +49,7 @@ contract PoolHandler is Test {
 
     deal(token, user, amount);
     IERC20(token).approve(address(contracts.poolProxy), amount);
-    vm.expectRevert();
+
     contracts.poolProxy.supply(token, amount, user, 0);
 
     supplySuccessCalls[token]++;
@@ -62,11 +62,10 @@ contract PoolHandler is Test {
     address token = _getTokenAddressFromIndex(tokenIndex);
 
     if (_validateAmountToBorrow(token, amount)) {
-      vm.expectRevert();
       contracts.poolProxy.borrow(token, amount, 2, 0, user);
       borrowSuccessCalls[token]++;
     } else {
-      // vm.expectRevert();
+      vm.expectRevert();
       contracts.poolProxy.borrow(token, amount, 2, 0, user);
       borrowFailCalls[token]++;
     }
@@ -81,11 +80,10 @@ contract PoolHandler is Test {
     address token = _getTokenAddressFromIndex(tokenIndex);
 
     if (_validateAmountToWithdraw(token, amount)) {
-      vm.expectRevert();
       contracts.poolProxy.withdraw(token, amount, user);
       withdrawSuccessCalls[token]++;
     } else {
-      // vm.expectRevert();
+      vm.expectRevert();
       contracts.poolProxy.withdraw(token, amount, user);
       withdrawFailCalls[token]++;
     }
@@ -102,11 +100,10 @@ contract PoolHandler is Test {
     IERC20(token).approve(address(contracts.poolProxy), amount);
 
     if (_validateAmountToRepay(token)) {
-      vm.expectRevert();
       contracts.poolProxy.repay(token, amount, 2, user);
       repaySuccessCalls[token]++;
     } else {
-      // vm.expectRevert();
+      vm.expectRevert();
       contracts.poolProxy.repay(token, amount, 2, user);
       repayFailCalls[token]++;
     }
