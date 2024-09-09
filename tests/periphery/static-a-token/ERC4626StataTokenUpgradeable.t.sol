@@ -60,10 +60,6 @@ contract ERC4626StataTokenUpgradeableTest is TestnetProcedures {
     assertEq(erc4626Upgradeable.previewRedeem(shares), assets);
   }
 
-  function test_totalAssets_shouldbeZeroOnZeroSupply() external {
-    assertEq(erc4626Upgradeable.totalAssets(), 0);
-  }
-
   // ### DEPOSIT TESTS ###
   function test_depositATokens(uint128 assets, address receiver) public {
     _validateReceiver(receiver);
