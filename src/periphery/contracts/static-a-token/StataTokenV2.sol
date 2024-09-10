@@ -89,6 +89,7 @@ contract StataTokenV2 is
     return super.nonces(owner);
   }
 
+  ///@inheritdoc IERC20Metadata
   function decimals()
     public
     view
