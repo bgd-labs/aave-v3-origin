@@ -6,6 +6,7 @@ import {IERC20Metadata} from '@openzeppelin/contracts/token/ERC20/extensions/IER
 import {PausableUpgradeable} from 'openzeppelin-contracts-upgradeable/contracts/utils/PausableUpgradeable.sol';
 import {IPermissionlessRescuable, PermissionlessRescuable} from 'solidity-utils/contracts/utils/PermissionlessRescuable.sol';
 import {IRescuableBase, RescuableBase} from 'solidity-utils/contracts/utils/RescuableBase.sol';
+import {IERC20Permit} from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol';
 
 import {IACLManager} from '../../../core/contracts/interfaces/IACLManager.sol';
 import {ERC4626Upgradeable, ERC4626StataTokenUpgradeable, IPool, Math, IERC20} from './ERC4626StataTokenUpgradeable.sol';
@@ -79,6 +80,13 @@ contract StataTokenV2 is
   ///@inheritdoc IStataTokenV2
   function canPause(address actor) public view returns (bool) {
     return IACLManager(POOL_ADDRESSES_PROVIDER.getACLManager()).isEmergencyAdmin(actor);
+  }
+
+  ///@inheritdoc IERC20Permit
+  function nonces(
+    address owner
+  ) public view virtual override(ERC20PermitUpgradeable, IERC20Permit) returns (uint256) {
+    return super.nonces(owner);
   }
 
   function decimals()
