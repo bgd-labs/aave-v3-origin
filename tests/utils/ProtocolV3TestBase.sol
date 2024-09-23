@@ -166,8 +166,16 @@ contract ProtocolV3TestBase is DiffUtils {
         vm.serializeUint(key, 'eModeCategory', i);
         vm.serializeString(key, 'label', pool.getEModeCategoryLabel(i));
         vm.serializeUint(key, 'ltv', cfg.ltv);
-        vm.serializeString(key, 'collateralBitmap', vm.toString(pool.getEModeCategoryCollateralBitmap(i)));
-        vm.serializeString(key, 'borrowableBitmap', vm.toString(pool.getEModeCategoryBorrowableBitmap(i)));
+        vm.serializeString(
+          key,
+          'collateralBitmap',
+          vm.toString(pool.getEModeCategoryCollateralBitmap(i))
+        );
+        vm.serializeString(
+          key,
+          'borrowableBitmap',
+          vm.toString(pool.getEModeCategoryBorrowableBitmap(i))
+        );
         vm.serializeUint(key, 'liquidationThreshold', cfg.liquidationThreshold);
         string memory object = vm.serializeUint(key, 'liquidationBonus', cfg.liquidationBonus);
         content = vm.serializeString(eModesKey, key, object);
