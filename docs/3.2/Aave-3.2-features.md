@@ -33,7 +33,7 @@ As it is a deprecated feature that will not be used in the future, it is possibl
 
 For anyone directly integrating with the InterestRateStrategy the method `calculateInterestRates` will no longer return the stable rate and therefore usage must be adjusted.
 
-```
+```diff
 function calculateInterestRates(
   DataTypes.CalculateInterestRatesParams memory params
 - ) external view returns (uint256, uint256, uint256);
