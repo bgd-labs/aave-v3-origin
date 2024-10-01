@@ -94,9 +94,9 @@ The following are the security procedures historically applied to Aave v3.X vers
 **-> Aave v3.2 - September 2024**
 
 - [Certora](TODO)
-- [Enigma](TODO)
-- [Oxorio](TODO)
-- [Pashov](TODO)
+- [Enigma](./audits/2024-09-30_Enigma_Aave-v3.2.pdf)
+- [Oxorio](./audits/2024-09-12_Oxorio_Aav3-v3.2.pdf)
+- [Pashov](./audits/2024-09-30_Enigma_Aave-v3.2.pdf)
 
 ### Bug bounty
 
