@@ -16,7 +16,7 @@ As it is a deprecated feature that will not be used in the future, it is possibl
 - Removed getters and setters of stable rate from ReserveConfiguration. The position on the bitmap is deprecated, as as stable rate is already disabled for all assets listed, with 0 value there.
 - When borrowing, repaying or flash loaning (keeping debt open), ValidationLogic now enforces that the mode is variable, reverting on stable.
 - Removed all logic related with stable rate mode on ValidationLogic.
-- removed deprecated ReserveStableRateBorrowing and StableDebtTokenUpgraded events on `PoolConfigurator`
+- Removed deprecated ReserveStableRateBorrowing and StableDebtTokenUpgraded events on `PoolConfigurator`
 - **BREAKING**: Modified DefaultReserveInterestRateStrategyV2 to only consider variable on the debt side. Breaking changes for anybody querying the strategy directly.
 
 #### Periphery
