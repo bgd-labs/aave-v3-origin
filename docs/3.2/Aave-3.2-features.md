@@ -125,7 +125,7 @@ For a user to be able to enter/switch an eMode:
 - `ConfigEngine` listings have been altered to no longer accept an eModeCategory.
 - `ConfigEngine.updateAssetsEMode` has been altered to accept a `borrowable/collateral` flag.
 
-### Migration guide
+## Migration guide
 
 For existing users, the upgrade is 100% backwards compatible and no migration or similar is required.
 Entering and leaving an eMode still works via `setUserEMode(categoryId)` and `getUserEMode(address user)` like in previous versions of the protocol.
