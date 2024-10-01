@@ -10,7 +10,7 @@ As it is a deprecated feature that will not be used in the future, it is possibl
 #### Core
 
 - Listing of new assets now does no longer instantiate a stable debt token
-- it is no longer possible to upgrade stable debt tokens or do any configurator change of the stable rate via the PoolConfigurator
+- It is no longer possible to upgrade stable debt tokens or do any configurator change of the stable rate via the PoolConfigurator
 - All Pool functions related with stable rate mode are removed
 - Usage of `getUserCurrentDebt()` (before aggregating variable + stable) is now replaced by directly querying only variable.
 - Removed getters and setters of stable rate from ReserveConfiguration. The position on the bitmap is deprecated, as as stable rate is already disabled for all assets listed, with 0 value there.
