@@ -1,9 +1,13 @@
 # Features
 
+<br>
+
 ## Deprecation of stable debt
 
 Currently, there is no active position with stable rate mode on any Aave instance.
 As it is a deprecated feature that will not be used in the future, it is possible to remove all logic related with stable rate mode from the protocol, to increase gas efficiency and decrease code complexity.
+
+<br>
 
 ### Changes
 
@@ -28,8 +32,9 @@ As it is a deprecated feature that will not be used in the future, it is possibl
 - Modifications on UIPoolDataProvider to remove stable debt related logic, but keeping compatibility (returning 0 values).
 - WrappedTokenGatewayV3 do not have borrowRate parameter on borrow and repay methods anymore
 
-### Migration guide
+<br>
 
+### Migration guide
 
 For anyone directly integrating with the InterestRateStrategy the method `calculateInterestRates` will no longer return the stable rate and therefore usage must be adjusted.
 
@@ -39,6 +44,8 @@ function calculateInterestRates(
 - ) external view returns (uint256, uint256, uint256);
 + ) external view returns (uint256, uint256);
 ```
+
+<br>
 
 ## Liquid eModes
 
@@ -64,6 +71,8 @@ This doesn’t stop there, as more sophisticated configuration strategies could 
 **For extra configuration flexibility, liquid eModes also allow now to flag an asset as only borrowable, only collateral, or both, in the context of an eMode.**
 For example, in a hypothetic eMode with only wstETH and WETH, the normal configuration would be wstETH as only collateral and WETH as only borrowable, fully focusing on the wstETH leverage use-case.
 
+<br>
+
 ### Borrowable in eMode
 This feature allows configuring which assets can be borrowed in a certain eMode via a bitmask.
 - When an eMode is created no assets can be borrowed per default. Each asset has to be allowed independently.
@@ -71,11 +80,15 @@ This feature allows configuring which assets can be borrowed in a certain eMode 
 - If a position has something borrowed that is not `borrowable` on eMode the position has to be repaid before being able to enter the eMode
 - For an asset to be borrowable in eMode it must be borrowable outside eMode as well
 
+<br>
+
 ### Collateral in eModes
 This feature allows configuring an asset to be collateral in a specified eMode via a bitmap.
 - When an eMode is created no asset can be collateral per default. Each asset has to be added explicitly.
 - If an asset is no eMode collateral it can still be collateral (just not with eMode LT/LTV/LB).
 - For an asset to be collateral in eMode, it must be collateral outside eMode as well.
+
+<br>
 
 ### Removal of the eMode oracle
 The eMode oracle has never been used and there is no intention do enable one in the future.
@@ -83,6 +96,8 @@ Therefore to save some gas on storage packing, the eMode oracle has been removed
 
 Note: The methods to alter configuration do not validate for an asset / eMode to exist.
 This is to stay consistent with the current methods on `PoolConfigurator`,  as there are multiple layers of security/risk procedures on updates to not create any issues.
+
+<br>
 
 ### Properties/rules
 
@@ -102,6 +117,8 @@ For a user to be able to enter/switch an eMode:
 - The health factor of the user must be >= 1 after the switch.
 - All borrowed assets must be borrowable in the new eMode.
 - Leaving an eMode (switching to eMode 0) is possible as long as the health factor after leaving would not drop below 1.
+
+<br>
 
 ### Changelog
 
@@ -125,7 +142,9 @@ For a user to be able to enter/switch an eMode:
 - `ConfigEngine` listings have been altered to no longer accept an eModeCategory.
 - `ConfigEngine.updateAssetsEMode` has been altered to accept a `borrowable/collateral` flag.
 
-## Migration guide
+<br>
+
+### Migration guide
 
 For existing users, the upgrade is 100% backwards compatible and no migration or similar is required.
 Entering and leaving an eMode still works via `setUserEMode(categoryId)` and `getUserEMode(address user)` like in previous versions of the protocol.

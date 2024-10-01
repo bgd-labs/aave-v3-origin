@@ -93,10 +93,17 @@ The following are the security procedures historically applied to Aave v3.X vers
 
 **-> Aave v3.2 - September 2024**
 
+#### Stable Rate and Liquid eModes
+
 - [Certora](TODO)
 - [Enigma](./audits/2024-09-30_Enigma_Aave-v3.2.pdf)
+
+#### Liquid eModes
+
 - [Oxorio](./audits/2024-09-12_Oxorio_Aav3-v3.2.pdf)
-- [Pashov](./audits/2024-09-30_Enigma_Aave-v3.2.pdf)
+- [Pashov](./audits/2024-09-15_Pashov_Aave-v3.2.pdf)
+
+<br>
 
 ### Bug bounty
 
