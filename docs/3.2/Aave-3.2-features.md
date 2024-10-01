@@ -74,7 +74,9 @@ For example, in a hypothetic eMode with only wstETH and WETH, the normal configu
 <br>
 
 ### Borrowable in eMode
+
 This feature allows configuring which assets can be borrowed in a certain eMode via a bitmask.
+
 - When an eMode is created no assets can be borrowed per default. Each asset has to be allowed independently.
 - If an asset `borrowable` is disabled after someone has borrowed that asset, the position will remain intact, but borrow exposure cannot be increased.
 - If a position has something borrowed that is not `borrowable` on eMode the position has to be repaid before being able to enter the eMode
@@ -83,7 +85,9 @@ This feature allows configuring which assets can be borrowed in a certain eMode 
 <br>
 
 ### Collateral in eModes
+
 This feature allows configuring an asset to be collateral in a specified eMode via a bitmap.
+
 - When an eMode is created no asset can be collateral per default. Each asset has to be added explicitly.
 - If an asset is no eMode collateral it can still be collateral (just not with eMode LT/LTV/LB).
 - For an asset to be collateral in eMode, it must be collateral outside eMode as well.
@@ -91,17 +95,19 @@ This feature allows configuring an asset to be collateral in a specified eMode v
 <br>
 
 ### Removal of the eMode oracle
+
 The eMode oracle has never been used and there is no intention do enable one in the future.
 Therefore to save some gas on storage packing, the eMode oracle has been removed.
 
 Note: The methods to alter configuration do not validate for an asset / eMode to exist.
-This is to stay consistent with the current methods on `PoolConfigurator`,  as there are multiple layers of security/risk procedures on updates to not create any issues.
+This is to stay consistent with the current methods on `PoolConfigurator`, as there are multiple layers of security/risk procedures on updates to not create any issues.
 
 <br>
 
 ### Properties/rules
 
 #### General eMode rules
+
 - Positions can use **any** collateral while being in an eMode. The eMode LT/LTV will only apply for the ones listed as eModeCollateral for that specific eMode, while the others will use their non-eMode LT/LTV
 - You can only borrow assets that are borrowable in your specific eMode`*`.
 - When being liquidated (and any Health Factor calculation) the eMode LT/LB will only apply to your eMode collaterals.
@@ -114,6 +120,7 @@ This is to stay consistent with the current methods on `PoolConfigurator`,  as t
 #### Enter/switch/leave an eMode
 
 For a user to be able to enter/switch an eMode:
+
 - The health factor of the user must be >= 1 after the switch.
 - All borrowed assets must be borrowable in the new eMode.
 - Leaving an eMode (switching to eMode 0) is possible as long as the health factor after leaving would not drop below 1.
@@ -133,7 +140,6 @@ For a user to be able to enter/switch an eMode:
 - **BREAKING**: `AaveProtocolDataProvider.getReserveEModeCategory` was removed as as there no longer is a `1:1` relation between assets and eModes.
 - **BREAKING**: The event `EModeAssetCategoryChanged ` will no longer be emitted, because its values would be misleading. Therefore `AssetCollateralInEModeChanged` and `AssetBorrowableInEModeChanged` have been introduced.
 - **BREAKING**: `reserveConfig.getEModeCategory()` will return the current eMode, but will no longer be updated and is flagged deprecated.
-
 
 #### Periphery
 
@@ -168,7 +174,6 @@ Therefore in addition to the **deprecated** `getEModeCategoryData` getter there 
 - `getEModeCategoryLabel(categoryId)`, returning the eMode label
 - `getEModeCategoryCollateralBitmap(categoryId)`, returning the collateral bitmap
 - `getEModeCategoryBorrowableBitmap(categoryId)`, returning the borrowable bitmap
-
 
 #### Identifying eModes for an asset
 
