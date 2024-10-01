@@ -95,11 +95,12 @@ The following are the security procedures historically applied to Aave v3.X vers
 
 #### Stable Rate and Liquid eModes
 
-- [Certora](TODO)
+- [Certora](./audits/2024-09-10_Certora_Aave-v3.2_Stable_Rate_Removal.pdf)
 - [Enigma](./audits/2024-09-30_Enigma_Aave-v3.2.pdf)
 
 #### Liquid eModes
 
+- [Certora](./audits/2024-09-19_Certora_Aave-v3.2_Liquid_eModes.pdf)
 - [Oxorio](./audits/2024-09-12_Oxorio_Aav3-v3.2.pdf)
 - [Pashov](./audits/2024-09-15_Pashov_Aave-v3.2.pdf)
 
