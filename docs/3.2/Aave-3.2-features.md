@@ -3,7 +3,7 @@
 ## Deprecation of stable debt
 
 Currently, there is no active position with stable rate mode on any Aave instance.
-As it is a deprecated feature that will not be used in the future, it is possible to remove all logic related with stable rate mode from the protocol - to increase gas efficiency and decrease code complexity.
+As it is a deprecated feature that will not be used in the future, it is possible to remove all logic related with stable rate mode from the protocol, to increase gas efficiency and decrease code complexity.
 
 ### Changes
 
