@@ -204,9 +204,9 @@ interface IPool {
    * @dev Emitted when deficit is realized on a liquidation.
    * @param user The user address where the bad debt will be burned
    * @param debtAsset The address of the underlying borrowed asset to be burned
-   * @param amountBurned The amount to burn
+   * @param amountCreated The amount of deficit created
    */
-  event DeficitCreated(address indexed user, address indexed debtAsset, uint256 amountBurned);
+  event DeficitCreated(address indexed user, address indexed debtAsset, uint256 amountCreated);
 
   /**
    * @notice Mints an `amount` of aTokens to the `onBehalfOf`
