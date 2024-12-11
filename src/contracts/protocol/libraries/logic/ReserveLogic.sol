@@ -39,8 +39,6 @@ library ReserveLogic {
     uint256 variableBorrowIndex
   );
 
-  event ReserveUsedAsCollateralDisabled(address indexed reserve, address indexed user);
-
   /**
    * @notice Returns the ongoing normalized income for the reserve.
    * @dev A value of 1e27 means there is no income. As time passes, the income is accrued
