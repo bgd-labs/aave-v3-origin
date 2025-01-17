@@ -19,17 +19,10 @@
   "type": "module",
   "devDependencies": {
     "prettier": "^2.8.3",
-    "prettier-plugin-solidity": "^1.1.1",
-    "@types/bluebird": "^3.5.38",
-    "@types/node-fetch": "^2.6.3",
-    "bluebird": "^3.7.2",
-    "ethers": "^6.6.2"
+    "prettier-plugin-solidity": "^1.1.1"
   },
   "dependencies": {
-    "@bgd-labs/aave-address-book": "4.7.1-55059af528eaf322fca91f3b0c59ce8c94019549.0",
     "@bgd-labs/aave-cli": "^1.1.12",
-    "catapulta-verify": "^1.1.1",
-    "ts-command-line-args": "^2.5.0",
-    "ts-node": "^10.9.1"
+    "catapulta-verify": "^1.2.1"
   }
 }
