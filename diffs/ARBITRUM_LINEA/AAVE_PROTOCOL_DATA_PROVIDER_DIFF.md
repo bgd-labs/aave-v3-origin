@@ -1,0 +1,7 @@
+```diff
+diff --git a/./downloads/ARBITRUM/AAVE_PROTOCOL_DATA_PROVIDER.sol b/./downloads/LINEA/AAVE_PROTOCOL_DATA_PROVIDER.sol
+index 8142191..9b34753 100644
+--- a/./downloads/ARBITRUM/AAVE_PROTOCOL_DATA_PROVIDER.sol
++++ b/./downloads/LINEA/AAVE_PROTOCOL_DATA_PROVIDER.sol
+
+```
