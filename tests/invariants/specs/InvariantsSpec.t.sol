@@ -23,13 +23,13 @@ abstract contract InvariantsSpec {
     'BASE_INVARIANT_A: debtToken totalSupply should be equal to the sum of all user balances (user debt)';
 
   string constant BASE_INVARIANT_B =
-    'BASE_INVARIANT_B: aToken totalSupply should be equal to the sum of all user balances)';
+    'BASE_INVARIANT_B: aToken totalSupply should be equal to the sum of all (user balances)';
 
   string constant BASE_INVARIANT_C =
-    'BASE_INVARIANT_C: The total amount of underlying in the protocol should be greater or equal than the aToken totalSuuply - debtToken totalSupply';
+    'BASE_INVARIANT_C: The total amount of underlying in the protocol should be greater than or equal to the aToken totalSupply - debtToken totalSupply';
 
   string constant BASE_INVARIANT_D =
-    'BASE_INVARIANT_D: The total amount of underlying in the protocol should greater or equal to the reserve virtualUnderlyingBalance';
+    'BASE_INVARIANT_D: The total amount of underlying in the protocol should be greater than or equal to the reserve virtualUnderlyingBalance';
 
   string constant BASE_INVARIANT_E =
     'BASE_INVARIANT_E: If reserve is frozen pending ltv cannot be 0';
