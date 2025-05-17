@@ -3,13 +3,10 @@ diff --git a/./downloads/SONEIUM/COLLECTOR_IMPL.sol b/./downloads/LINEA/COLLECTO
 index 2189127..7b1af34 100644
 --- a/./downloads/SONEIUM/COLLECTOR_IMPL.sol
 +++ b/./downloads/LINEA/COLLECTOR_IMPL.sol
-@@ -646,7 +646,7 @@ abstract contract ContextUpgradeable is Initializable {
-     }
- }
- 
+
 -// downloads/SONEIUM/COLLECTOR_IMPL/src/contracts/treasury/ICollector.sol
 +// downloads/LINEA/COLLECTOR_IMPL/CollectorWithCustomImplNewLayout/lib/aave-v3-origin/src/contracts/treasury/ICollector.sol
- 
+
  interface ICollector {
    struct Stream {
 @@ -709,7 +709,7 @@ interface ICollector {
@@ -18,16 +15,16 @@ index 2189127..7b1af34 100644
     */
 -  error OnlyFundsAdminOrRecipient();
 +  error OnlyFundsAdminOrRceipient();
- 
+
    /**
     * @dev The provided ID does not belong to an existing stream
 @@ -1510,7 +1510,7 @@ library SafeERC20 {
      }
  }
- 
+
 -// downloads/SONEIUM/COLLECTOR_IMPL/src/contracts/treasury/Collector.sol
 +// downloads/LINEA/COLLECTOR_IMPL/CollectorWithCustomImplNewLayout/lib/aave-v3-origin/src/contracts/treasury/Collector.sol
- 
+
  /**
   * @title Collector
 @@ -1573,7 +1573,7 @@ contract Collector is AccessControlUpgradeable, ReentrancyGuardUpgradeable, ICol
