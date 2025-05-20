@@ -1,0 +1,7 @@
+```diff
+diff --git a/./downloads/SONEIUM/DEFAULT_VARIABLE_DEBT_TOKEN_IMPL.sol b/./downloads/LINEA/DEFAULT_VARIABLE_DEBT_TOKEN_IMPL.sol
+index 7dd93d2..5e2801e 100644
+--- a/./downloads/SONEIUM/DEFAULT_VARIABLE_DEBT_TOKEN_IMPL.sol
++++ b/./downloads/LINEA/DEFAULT_VARIABLE_DEBT_TOKEN_IMPL.sol
+
+```
