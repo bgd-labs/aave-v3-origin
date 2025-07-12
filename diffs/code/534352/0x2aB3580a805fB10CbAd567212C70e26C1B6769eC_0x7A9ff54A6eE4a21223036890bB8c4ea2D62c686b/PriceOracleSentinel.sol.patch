@@ -1,0 +1,93 @@
+===================================================================
+--- src/contracts/misc/PriceOracleSentinel.sol
++++ src/core/contracts/protocol/configuration/PriceOracleSentinel.sol
+@@ -1,12 +1,12 @@
+-// SPDX-License-Identifier: BUSL-1.1
++// SPDX-License-Identifier: MIT
+ pragma solidity ^0.8.10;
+ 
+-import {Errors} from "../protocol/libraries/helpers/Errors.sol";
+-import {IPoolAddressesProvider} from "../interfaces/IPoolAddressesProvider.sol";
+-import {IPriceOracleSentinel} from "../interfaces/IPriceOracleSentinel.sol";
+-import {ISequencerOracle} from "../interfaces/ISequencerOracle.sol";
+-import {IACLManager} from "../interfaces/IACLManager.sol";
++import {Errors} from "../libraries/helpers/Errors.sol";
++import {IPoolAddressesProvider} from "../../interfaces/IPoolAddressesProvider.sol";
++import {IPriceOracleSentinel} from "../../interfaces/IPriceOracleSentinel.sol";
++import {ISequencerOracle} from "../../interfaces/ISequencerOracle.sol";
++import {IACLManager} from "../../interfaces/IACLManager.sol";
+ 
+ /**
+  * @title PriceOracleSentinel
+  * @author Aave
+@@ -23,9 +23,9 @@
+             ADDRESSES_PROVIDER.getACLManager()
+         );
+         require(
+             aclManager.isPoolAdmin(msg.sender),
+-            Errors.CallerNotPoolAdmin()
++            Errors.CALLER_NOT_POOL_ADMIN
+         );
+         _;
+     }
+ 
+@@ -38,9 +38,9 @@
+         );
+         require(
+             aclManager.isRiskAdmin(msg.sender) ||
+                 aclManager.isPoolAdmin(msg.sender),
+-            Errors.CallerNotRiskOrPoolAdmin()
++            Errors.CALLER_NOT_RISK_OR_POOL_ADMIN
+         );
+         _;
+     }
+ 
+@@ -66,14 +66,14 @@
+         _gracePeriod = gracePeriod;
+     }
+ 
+     /// @inheritdoc IPriceOracleSentinel
+-    function isBorrowAllowed() external view override returns (bool) {
++    function isBorrowAllowed() public view override returns (bool) {
+         return _isUpAndGracePeriodPassed();
+     }
+ 
+     /// @inheritdoc IPriceOracleSentinel
+-    function isLiquidationAllowed() external view override returns (bool) {
++    function isLiquidationAllowed() public view override returns (bool) {
+         return _isUpAndGracePeriodPassed();
+     }
+ 
+     /**
+@@ -88,27 +88,27 @@
+ 
+     /// @inheritdoc IPriceOracleSentinel
+     function setSequencerOracle(
+         address newSequencerOracle
+-    ) external onlyPoolAdmin {
++    ) public onlyPoolAdmin {
+         _sequencerOracle = ISequencerOracle(newSequencerOracle);
+         emit SequencerOracleUpdated(newSequencerOracle);
+     }
+ 
+     /// @inheritdoc IPriceOracleSentinel
+     function setGracePeriod(
+         uint256 newGracePeriod
+-    ) external onlyRiskOrPoolAdmins {
++    ) public onlyRiskOrPoolAdmins {
+         _gracePeriod = newGracePeriod;
+         emit GracePeriodUpdated(newGracePeriod);
+     }
+ 
+     /// @inheritdoc IPriceOracleSentinel
+-    function getSequencerOracle() external view returns (address) {
++    function getSequencerOracle() public view returns (address) {
+         return address(_sequencerOracle);
+     }
+ 
+     /// @inheritdoc IPriceOracleSentinel
+-    function getGracePeriod() external view returns (uint256) {
++    function getGracePeriod() public view returns (uint256) {
+         return _gracePeriod;
+     }
+ }

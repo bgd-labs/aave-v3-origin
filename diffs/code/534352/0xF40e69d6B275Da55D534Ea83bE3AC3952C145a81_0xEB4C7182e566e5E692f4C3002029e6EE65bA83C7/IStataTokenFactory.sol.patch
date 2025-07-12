@@ -1,0 +1,20 @@
+Index: src/contracts/extensions/stata-token/interfaces/IStataTokenFactory.sol
+===================================================================
+--- src/contracts/extensions/stata-token/interfaces/IStataTokenFactory.sol
++++ src/contracts/extensions/stata-token/interfaces/IStataTokenFactory.sol
+@@ -13,12 +13,12 @@
+      */
+     function POOL() external view returns (IPool);
+ 
+     /**
+-     * @notice The initial owner used for all tokens created via the factory.
+-     * @return The address of the initial owner.
++     * @notice The proxy admin used for all tokens created via the factory.
++     * @return The proxy admin address.
+      */
+-    function INITIAL_OWNER() external view returns (address);
++    function PROXY_ADMIN() external view returns (address);
+ 
+     /**
+      * @notice The proxy factory used for all tokens created via the stata factory.
+      * @return The proxy factory address.

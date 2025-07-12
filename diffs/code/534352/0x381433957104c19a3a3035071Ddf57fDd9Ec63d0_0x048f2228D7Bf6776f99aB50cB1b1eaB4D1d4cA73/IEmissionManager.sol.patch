@@ -1,0 +1,65 @@
+===================================================================
+--- src/contracts/rewards/interfaces/IEmissionManager.sol
++++ @aave/periphery-v3/contracts/rewards/interfaces/IEmissionManager.sol
+@@ -1,8 +1,8 @@
+-// SPDX-License-Identifier: MIT
+-pragma solidity ^0.8.10;
++// SPDX-License-Identifier: agpl-3.0
++pragma solidity 0.8.10;
+ 
+-import {AggregatorInterface} from "../../dependencies/chainlink/AggregatorInterface.sol";
++import {IEACAggregatorProxy} from "../../misc/interfaces/IEACAggregatorProxy.sol";
+ import {RewardsDataTypes} from "../libraries/RewardsDataTypes.sol";
+ import {ITransferStrategyBase} from "./ITransferStrategyBase.sol";
+ import {IRewardsController} from "./IRewardsController.sol";
+ 
+@@ -33,10 +33,10 @@
+      *   uint40 distributionEnd: The end of the distribution of the incentives for an asset
+      *   address asset: The asset address to incentivize
+      *   address reward: The reward token address
+      *   ITransferStrategy transferStrategy: The TransferStrategy address with the install hook and claim logic.
+-     *   AggregatorInterface rewardOracle: The Price Oracle of a reward to visualize the incentives at the UI Frontend.
+-     *                                     Must follow Chainlink Aggregator AggregatorInterface interface to be compatible.
++     *   IEACAggregatorProxy rewardOracle: The Price Oracle of a reward to visualize the incentives at the UI Frontend.
++     *                                     Must follow Chainlink Aggregator IEACAggregatorProxy interface to be compatible.
+      */
+     function configureAssets(
+         RewardsDataTypes.RewardsConfigInput[] memory config
+     ) external;
+@@ -55,17 +55,17 @@
+     /**
+      * @dev Sets an Aave Oracle contract to enforce rewards with a source of value.
+      * @dev Only callable by the emission admin of the given reward
+      * @notice At the moment of reward configuration, the Incentives Controller performs
+-     * a check to see if the reward asset oracle is compatible with AggregatorInterface proxy.
++     * a check to see if the reward asset oracle is compatible with IEACAggregator proxy.
+      * This check is enforced for integrators to be able to show incentives at
+      * the current Aave UI without the need to setup an external price registry
+      * @param reward The address of the reward to set the price aggregator
+-     * @param rewardOracle The address of price aggregator that follows AggregatorInterface interface
++     * @param rewardOracle The address of price aggregator that follows IEACAggregatorProxy interface
+      */
+     function setRewardOracle(
+         address reward,
+-        AggregatorInterface rewardOracle
++        IEACAggregatorProxy rewardOracle
+     ) external;
+ 
+     /**
+      * @dev Sets the end date for the distribution
+@@ -100,8 +100,15 @@
+      */
+     function setClaimer(address user, address claimer) external;
+ 
+     /**
++     * @dev Updates the address of the emission manager
++     * @dev Only callable by the owner of the EmissionManager
++     * @param emissionManager The address of the new EmissionManager
++     */
++    function setEmissionManager(address emissionManager) external;
++
++    /**
+      * @dev Updates the admin of the reward emission
+      * @dev Only callable by the owner of the EmissionManager
+      * @param reward The address of the reward token
+      * @param admin The address of the new admin of the emission

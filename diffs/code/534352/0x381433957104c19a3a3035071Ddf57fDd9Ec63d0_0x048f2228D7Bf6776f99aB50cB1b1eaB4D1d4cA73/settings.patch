@@ -1,0 +1,71 @@
+Index: settings
+===================================================================
+--- settings
++++ settings
+@@ -1,25 +1,16 @@
+ {
+-  "remappings": [
+-    "solidity-utils/=lib/solidity-utils/src/",
+-    "forge-std/=lib/forge-std/src/",
+-    "ds-test/=lib/forge-std/lib/ds-test/src/",
+-    "openzeppelin-contracts-upgradeable/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/",
+-    "openzeppelin-contracts/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/",
+-    "@openzeppelin/contracts-upgradeable/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/contracts/",
+-    "@openzeppelin/contracts/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/",
+-    "erc4626-tests/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/erc4626-tests/",
+-    "halmos-cheatcodes/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/halmos-cheatcodes/src/"
+-  ],
++  "evmVersion": "berlin",
++  "libraries": {},
++  "metadata": {
++    "bytecodeHash": "ipfs",
++    "useLiteralContent": true
++  },
+   "optimizer": {
+     "enabled": true,
+-    "runs": 200
++    "runs": 100000
+   },
+-  "metadata": {
+-    "useLiteralContent": false,
+-    "bytecodeHash": "none",
+-    "appendCBOR": true
+-  },
++  "remappings": [],
+   "outputSelection": {
+     "*": {
+       "*": [
+         "evm.bytecode",
+@@ -29,31 +20,6 @@
+         "metadata",
+         "abi"
+       ]
+     }
+-  },
+-  "evmVersion": "shanghai",
+-  "viaIR": false,
+-  "libraries": {
+-    "src/contracts/protocol/libraries/logic/BorrowLogic.sol": {
+-      "BorrowLogic": "0x5047AD5e603Ec4a2AB58aaE2321C07D8f4De6a8a"
+-    },
+-    "src/contracts/protocol/libraries/logic/ConfiguratorLogic.sol": {
+-      "ConfiguratorLogic": "0x6E2aFD57a161d12f34f416c29619BFeAcAC8AA18"
+-    },
+-    "src/contracts/protocol/libraries/logic/EModeLogic.sol": {
+-      "EModeLogic": "0x7fcE69A2bA3e78EeB36798cde2c94C70f3A043af"
+-    },
+-    "src/contracts/protocol/libraries/logic/FlashLoanLogic.sol": {
+-      "FlashLoanLogic": "0x4fDB5d360f946CFD25b14F346f748204c0C6a2F4"
+-    },
+-    "src/contracts/protocol/libraries/logic/LiquidationLogic.sol": {
+-      "LiquidationLogic": "0x5934b283f7120500253f277CCcF4521528aE34D6"
+-    },
+-    "src/contracts/protocol/libraries/logic/PoolLogic.sol": {
+-      "PoolLogic": "0x564c42578A1b270EaE16c25Da39d901245881d1F"
+-    },
+-    "src/contracts/protocol/libraries/logic/SupplyLogic.sol": {
+-      "SupplyLogic": "0x1eF34B91afC368174F579067D1DB94325cDC7946"
+-    }
+   }
+ }
+\ No newline at end of file

@@ -1,0 +1,15 @@
+Index: settings
+===================================================================
+--- settings
++++ settings
+@@ -8,8 +8,10 @@
+     "aave-address-book/=lib/adi-deploy/lib/aave-helpers/lib/aave-address-book/src/",
+     "aave-v3-origin/=lib/adi-deploy/lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/",
+     "adi-deploy/=lib/adi-deploy/",
+     "@openzeppelin/=lib/adi-deploy/lib/aave-delivery-infrastructure/lib/openzeppelin-contracts/",
++    "@openzeppelin/contracts-upgradeable/=lib/adi-deploy/lib/aave-delivery-infrastructure/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/contracts/",
++    "@openzeppelin/contracts/=lib/adi-deploy/lib/aave-delivery-infrastructure/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/",
+     "aave-v3-origin-tests/=lib/adi-deploy/lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/tests/",
+     "adi-scripts/=lib/adi-deploy/lib/aave-delivery-infrastructure/scripts/",
+     "adi-tests/=lib/adi-deploy/lib/aave-delivery-infrastructure/tests/",
+     "adi/=lib/adi-deploy/lib/aave-delivery-infrastructure/src/contracts/",
