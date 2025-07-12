@@ -1,0 +1,83 @@
+Index: src/contracts/extensions/stata-token/StataTokenFactory.sol
+===================================================================
+--- src/contracts/extensions/stata-token/StataTokenFactory.sol
++++ src/contracts/extensions/stata-token/StataTokenFactory.sol
+@@ -1,10 +1,10 @@
+ // SPDX-License-Identifier: BUSL-1.1
+ pragma solidity ^0.8.10;
+ 
+-import {IERC20Metadata} from "openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+-import {Initializable} from "openzeppelin-contracts/contracts/proxy/utils/Initializable.sol";
+-import {ITransparentProxyFactory} from "solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol";
++import {IERC20Metadata} from "solidity-utils/contracts/oz-common/interfaces/IERC20Metadata.sol";
++import {ITransparentProxyFactory, ProxyAdmin} from "solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol";
++import {Initializable} from "solidity-utils/contracts/transparent-proxy/Initializable.sol";
+ import {IPool, DataTypes} from "../../../contracts/interfaces/IPool.sol";
+ import {StataTokenV2} from "./StataTokenV2.sol";
+ import {IStataTokenFactory} from "./interfaces/IStataTokenFactory.sol";
+ 
+@@ -19,9 +19,9 @@
+     ///@inheritdoc IStataTokenFactory
+     IPool public immutable POOL;
+ 
+     ///@inheritdoc IStataTokenFactory
+-    address public immutable INITIAL_OWNER;
++    address public immutable PROXY_ADMIN;
+ 
+     ///@inheritdoc IStataTokenFactory
+     ITransparentProxyFactory public immutable TRANSPARENT_PROXY_FACTORY;
+ 
+@@ -37,15 +37,14 @@
+     );
+ 
+     constructor(
+         IPool pool,
+-        address initialOwner,
++        address proxyAdmin,
+         ITransparentProxyFactory transparentProxyFactory,
+         address stataTokenImpl
+     ) {
+-        _disableInitializers();
+         POOL = pool;
+-        INITIAL_OWNER = initialOwner;
++        PROXY_ADMIN = proxyAdmin;
+         TRANSPARENT_PROXY_FACTORY = transparentProxyFactory;
+         STATA_TOKEN_IMPL = stataTokenImpl;
+     }
+ 
+@@ -58,26 +57,28 @@
+         address[] memory stataTokens = new address[](underlyings.length);
+         for (uint256 i = 0; i < underlyings.length; i++) {
+             address cachedStataToken = _underlyingToStataToken[underlyings[i]];
+             if (cachedStataToken == address(0)) {
+-                address aTokenAddress = POOL.getReserveAToken(underlyings[i]);
+-                if (aTokenAddress == address(0))
+-                    revert NotListedUnderlying(aTokenAddress);
++                DataTypes.ReserveDataLegacy memory reserveData = POOL
++                    .getReserveData(underlyings[i]);
++                if (reserveData.aTokenAddress == address(0))
++                    revert NotListedUnderlying(reserveData.aTokenAddress);
+                 bytes memory symbol = abi.encodePacked(
+                     "w",
+-                    IERC20Metadata(aTokenAddress).symbol()
++                    IERC20Metadata(reserveData.aTokenAddress).symbol()
+                 );
+                 address stataToken = TRANSPARENT_PROXY_FACTORY
+                     .createDeterministic(
+                         STATA_TOKEN_IMPL,
+-                        INITIAL_OWNER,
++                        ProxyAdmin(PROXY_ADMIN),
+                         abi.encodeWithSelector(
+                             StataTokenV2.initialize.selector,
+-                            aTokenAddress,
++                            reserveData.aTokenAddress,
+                             string(
+                                 abi.encodePacked(
+                                     "Wrapped ",
+-                                    IERC20Metadata(aTokenAddress).name()
++                                    IERC20Metadata(reserveData.aTokenAddress)
++                                        .name()
+                                 )
+                             ),
+                             string(symbol)
+                         ),

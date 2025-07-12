@@ -1,0 +1,10 @@
+===================================================================
+--- src/contracts/rewards/interfaces/IRewardsDistributor.sol
++++ lib/aave-v3-periphery/contracts/rewards/interfaces/IRewardsDistributor.sol
+@@ -1,5 +1,5 @@
+-// SPDX-License-Identifier: MIT
++// SPDX-License-Identifier: AGPL-3.0
+ pragma solidity ^0.8.10;
+ 
+ /**
+  * @title IRewardsDistributor

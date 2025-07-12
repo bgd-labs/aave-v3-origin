@@ -1,0 +1,15 @@
+Index: src/contracts/payloads/WithPayloadsManager.sol
+===================================================================
+--- src/contracts/payloads/WithPayloadsManager.sol
++++ src/contracts/payloads/WithPayloadsManager.sol
+@@ -44,9 +44,9 @@
+ 
+     /// @inheritdoc IWithPayloadsManager
+     function updatePayloadsManager(
+         address newPayloadsManager
+-    ) external onlyOwner {
++    ) external onlyOwnerOrGuardian {
+         _updatePayloadsManager(newPayloadsManager);
+     }
+ 
+     /**

@@ -1,0 +1,12 @@
+===================================================================
+--- src/contracts/dependencies/openzeppelin/contracts/AccessControl.sol
++++ @aave/core-v3/contracts/dependencies/openzeppelin/contracts/AccessControl.sol
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: MIT
+ 
+-pragma solidity ^0.8.10;
++pragma solidity 0.8.10;
+ 
+ import "./IAccessControl.sol";
+ import "./Context.sol";
+ import "./Strings.sol";

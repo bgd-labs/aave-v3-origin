@@ -1,0 +1,26 @@
+===================================================================
+--- src/contracts/rewards/libraries/RewardsDataTypes.sol
++++ lib/aave-v3-periphery/contracts/rewards/libraries/RewardsDataTypes.sol
+@@ -1,9 +1,9 @@
+-// SPDX-License-Identifier: MIT
++// SPDX-License-Identifier: AGPL-3.0
+ pragma solidity ^0.8.10;
+ 
+ import {ITransferStrategyBase} from "../interfaces/ITransferStrategyBase.sol";
+-import {AggregatorInterface} from "../../dependencies/chainlink/AggregatorInterface.sol";
++import {IEACAggregatorProxy} from "../../misc/interfaces/IEACAggregatorProxy.sol";
+ 
+ library RewardsDataTypes {
+     struct RewardsConfigInput {
+         uint88 emissionPerSecond;
+@@ -11,9 +11,9 @@
+         uint32 distributionEnd;
+         address asset;
+         address reward;
+         ITransferStrategyBase transferStrategy;
+-        AggregatorInterface rewardOracle;
++        IEACAggregatorProxy rewardOracle;
+     }
+ 
+     struct UserAssetBalance {
+         address asset;

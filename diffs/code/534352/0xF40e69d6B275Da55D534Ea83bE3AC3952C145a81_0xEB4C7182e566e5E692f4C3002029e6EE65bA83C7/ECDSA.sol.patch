@@ -1,0 +1,73 @@
+Index: lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol
+===================================================================
+--- lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol
++++ lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol
+@@ -1,6 +1,6 @@
+ // SPDX-License-Identifier: MIT
+-// OpenZeppelin Contracts (last updated v5.1.0) (utils/cryptography/ECDSA.sol)
++// OpenZeppelin Contracts (last updated v5.0.0) (utils/cryptography/ECDSA.sol)
+ 
+ pragma solidity ^0.8.20;
+ 
+ /**
+@@ -55,20 +55,17 @@
+      */
+     function tryRecover(
+         bytes32 hash,
+         bytes memory signature
+-    )
+-        internal
+-        pure
+-        returns (address recovered, RecoverError err, bytes32 errArg)
+-    {
++    ) internal pure returns (address, RecoverError, bytes32) {
+         if (signature.length == 65) {
+             bytes32 r;
+             bytes32 s;
+             uint8 v;
+             // ecrecover takes the signature parameters, and the only way to get them
+             // currently is to use assembly.
+-            assembly ("memory-safe") {
++            /// @solidity memory-safe-assembly
++            assembly {
+                 r := mload(add(signature, 0x20))
+                 s := mload(add(signature, 0x40))
+                 v := byte(0, mload(add(signature, 0x60)))
+             }
+@@ -110,19 +107,15 @@
+ 
+     /**
+      * @dev Overload of {ECDSA-tryRecover} that receives the `r` and `vs` short-signature fields separately.
+      *
+-     * See https://eips.ethereum.org/EIPS/eip-2098[ERC-2098 short signatures]
++     * See https://eips.ethereum.org/EIPS/eip-2098[EIP-2098 short signatures]
+      */
+     function tryRecover(
+         bytes32 hash,
+         bytes32 r,
+         bytes32 vs
+-    )
+-        internal
+-        pure
+-        returns (address recovered, RecoverError err, bytes32 errArg)
+-    {
++    ) internal pure returns (address, RecoverError, bytes32) {
+         unchecked {
+             bytes32 s = vs &
+                 bytes32(
+                     0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+@@ -158,13 +151,9 @@
+         bytes32 hash,
+         uint8 v,
+         bytes32 r,
+         bytes32 s
+-    )
+-        internal
+-        pure
+-        returns (address recovered, RecoverError err, bytes32 errArg)
+-    {
++    ) internal pure returns (address, RecoverError, bytes32) {
+         // EIP-2 still allows signature malleability for ecrecover(). Remove this possibility and make the signature
+         // unique. Appendix F in the Ethereum Yellow paper (https://ethereum.github.io/yellowpaper/paper.pdf), defines
+         // the valid range for s in (301): 0 < s < secp256k1n ÷ 2 + 1, and for v in (302): v ∈ {27, 28}. Most
+         // signatures from current libraries generate a unique signature with an s-value in the lower half order.

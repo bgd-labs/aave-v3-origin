@@ -1,0 +1,22 @@
+Index: src/contracts/payloads/interfaces/IPermissionedPayloadsController.sol
+===================================================================
+--- src/contracts/payloads/interfaces/IPermissionedPayloadsController.sol
++++ src/contracts/payloads/interfaces/IPermissionedPayloadsController.sol
+@@ -15,15 +15,13 @@
+     IWithPayloadsManager
+ {
+     /**
+      * @notice method to initialize the contract with starter params. Only callable by proxy
+-     * @param owner address of the owner. With permission to change the delay and rescue
+-     * @param guardian address of the guardian. With permission to cancel payloads
+-     * @param initialPayloadsManager address of the initial payload manager. With permission to create payloads
++     * @param guardian address of the guardian. With permissions to call certain methods
++     * @param initialPayloadsManager address of the initial payload manager
+      * @param executors array of executor configurations
+      */
+     function initialize(
+-        address owner,
+         address guardian,
+         address initialPayloadsManager,
+         UpdateExecutorInput[] calldata executors
+     ) external;

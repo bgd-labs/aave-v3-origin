@@ -1,0 +1,51 @@
+Index: src/contracts/payloads/PermissionedPayloadsController.sol
+===================================================================
+--- src/contracts/payloads/PermissionedPayloadsController.sol
++++ src/contracts/payloads/PermissionedPayloadsController.sol
+@@ -12,26 +12,29 @@
+  * @title PermissionedPayloadsController
+  * @author BGD Labs
+  * @notice this contract contains the logic to execute payloads
+  * without governance cycle but leaving the gap to review and cancel payloads.
+- * @dev this contract is permissioned, only the payloads manager can create and queue payloads.
+- * @dev owner has the permission to update the execution delay and rescue.
+- * @dev guardian has the permission to cancel payload, along with the payloads manager.
++ * @dev this contract is permissioned, only the payloads manager can create
++ * and queue payloads. Also, not only guardian but also the payloads manager can cancel payloads.
+  * @dev constants were adjusted as the governance cycle is no longer needed.
++ * @dev owner and guardian are the same entity here.
+  */
+ contract PermissionedPayloadsController is
+     PayloadsControllerCore,
+     WithPayloadsManager,
+     IPermissionedPayloadsController
+ {
+     /// @inheritdoc IPermissionedPayloadsController
+     function initialize(
+-        address owner,
+         address guardian,
+         address initialPayloadsManager,
+         UpdateExecutorInput[] calldata executors
+-    ) public initializer {
+-        PayloadsControllerCore.initialize(owner, guardian, executors);
++    )
++        public
++        override(PayloadsControllerCore, IPermissionedPayloadsController)
++        initializer
++    {
++        PayloadsControllerCore.initialize(guardian, guardian, executors);
+         _updatePayloadsManager(initialPayloadsManager);
+     }
+ 
+     /// @inheritdoc IPayloadsControllerCore
+@@ -93,9 +96,9 @@
+     /**
+      * @notice Sets the execution delay
+      * @param delay The new execution delay to be set
+      */
+-    function setExecutionDelay(uint40 delay) external onlyOwner {
++    function setExecutionDelay(uint40 delay) external onlyGuardian {
+         require(
+             delay >= MIN_EXECUTION_DELAY() && delay <= MAX_EXECUTION_DELAY(),
+             Errors.INVALID_EXECUTOR_DELAY
+         );

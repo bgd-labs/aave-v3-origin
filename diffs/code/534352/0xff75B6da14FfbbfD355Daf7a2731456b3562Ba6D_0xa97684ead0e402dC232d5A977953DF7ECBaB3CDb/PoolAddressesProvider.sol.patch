@@ -1,0 +1,47 @@
+===================================================================
+--- src/contracts/protocol/configuration/PoolAddressesProvider.sol
++++ @aave/core-v3/contracts/protocol/configuration/PoolAddressesProvider.sol
+@@ -1,18 +1,18 @@
+ // SPDX-License-Identifier: BUSL-1.1
+-pragma solidity ^0.8.10;
++pragma solidity 0.8.10;
+ 
+ import {Ownable} from "../../dependencies/openzeppelin/contracts/Ownable.sol";
+ import {IPoolAddressesProvider} from "../../interfaces/IPoolAddressesProvider.sol";
+-import {InitializableImmutableAdminUpgradeabilityProxy} from "../../misc/aave-upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
++import {InitializableImmutableAdminUpgradeabilityProxy} from "../libraries/aave-upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
+ 
+ /**
+  * @title PoolAddressesProvider
+  * @author Aave
+  * @notice Main registry of addresses part of or connected to the protocol, including permissioned roles
+  * @dev Acts as factory of proxies and admin of those, so with right to change its implementations
+  * @dev Owned by the Aave Governance
+- */
++ **/
+ contract PoolAddressesProvider is Ownable, IPoolAddressesProvider {
+     // Identifier of the Aave Market
+     string private _marketId;
+ 
+@@ -188,9 +188,9 @@
+      * @dev If there is already a proxy registered, it just updates the implementation to `newAddress` and
+      *   calls the initialize() function via upgradeToAndCall() in the proxy
+      * @param id The id of the proxy to be updated
+      * @param newAddress The address of the new implementation
+-     */
++     **/
+     function _updateImpl(bytes32 id, address newAddress) internal {
+         address proxyAddress = _addresses[id];
+         InitializableImmutableAdminUpgradeabilityProxy proxy;
+         bytes memory params = abi.encodeWithSignature(
+@@ -215,9 +215,9 @@
+ 
+     /**
+      * @notice Updates the identifier of the Aave market.
+      * @param newMarketId The new id of the market
+-     */
++     **/
+     function _setMarketId(string memory newMarketId) internal {
+         string memory oldMarketId = _marketId;
+         _marketId = newMarketId;
+         emit MarketIdSet(oldMarketId, newMarketId);

@@ -1,0 +1,59 @@
+===================================================================
+--- src/contracts/rewards/EmissionManager.sol
++++ @aave/periphery-v3/contracts/rewards/EmissionManager.sol
+@@ -1,9 +1,9 @@
+-// SPDX-License-Identifier: BUSL-1.1
+-pragma solidity ^0.8.10;
++// SPDX-License-Identifier: agpl-3.0
++pragma solidity 0.8.10;
+ 
+-import {Ownable} from "../dependencies/openzeppelin/contracts/Ownable.sol";
+-import {AggregatorInterface} from "../dependencies/chainlink/AggregatorInterface.sol";
++import {Ownable} from "@aave/core-v3/contracts/dependencies/openzeppelin/contracts/Ownable.sol";
++import {IEACAggregatorProxy} from "../misc/interfaces/IEACAggregatorProxy.sol";
+ import {IEmissionManager} from "./interfaces/IEmissionManager.sol";
+ import {ITransferStrategyBase} from "./interfaces/ITransferStrategyBase.sol";
+ import {IRewardsController} from "./interfaces/IRewardsController.sol";
+ import {RewardsDataTypes} from "./libraries/RewardsDataTypes.sol";
+@@ -28,11 +28,13 @@
+     }
+ 
+     /**
+      * Constructor.
++     * @param controller The address of the RewardsController contract
+      * @param owner The address of the owner
+      */
+-    constructor(address owner) {
++    constructor(address controller, address owner) {
++        _rewardsController = IRewardsController(controller);
+         transferOwnership(owner);
+     }
+ 
+     /// @inheritdoc IEmissionManager
+@@ -58,9 +60,9 @@
+ 
+     /// @inheritdoc IEmissionManager
+     function setRewardOracle(
+         address reward,
+-        AggregatorInterface rewardOracle
++        IEACAggregatorProxy rewardOracle
+     ) external override onlyEmissionAdmin(reward) {
+         _rewardsController.setRewardOracle(reward, rewardOracle);
+     }
+ 
+@@ -104,8 +106,15 @@
+         _rewardsController.setClaimer(user, claimer);
+     }
+ 
+     /// @inheritdoc IEmissionManager
++    function setEmissionManager(
++        address emissionManager
++    ) external override onlyOwner {
++        _rewardsController.setEmissionManager(emissionManager);
++    }
++
++    /// @inheritdoc IEmissionManager
+     function setEmissionAdmin(
+         address reward,
+         address admin
+     ) external override onlyOwner {

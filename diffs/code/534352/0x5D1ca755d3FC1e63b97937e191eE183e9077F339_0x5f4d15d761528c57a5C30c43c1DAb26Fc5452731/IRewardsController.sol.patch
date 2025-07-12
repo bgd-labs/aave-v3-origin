@@ -1,0 +1,45 @@
+===================================================================
+--- src/contracts/rewards/interfaces/IRewardsController.sol
++++ lib/aave-v3-periphery/contracts/rewards/interfaces/IRewardsController.sol
+@@ -1,10 +1,10 @@
+-// SPDX-License-Identifier: MIT
++// SPDX-License-Identifier: AGPL-3.0
+ pragma solidity ^0.8.10;
+ 
+ import {IRewardsDistributor} from "./IRewardsDistributor.sol";
+ import {ITransferStrategyBase} from "./ITransferStrategyBase.sol";
+-import {AggregatorInterface} from "../../dependencies/chainlink/AggregatorInterface.sol";
++import {IEACAggregatorProxy} from "../../misc/interfaces/IEACAggregatorProxy.sol";
+ import {RewardsDataTypes} from "../libraries/RewardsDataTypes.sol";
+ 
+ /**
+  * @title IRewardsController
+@@ -78,13 +78,13 @@
+      * a check to see if the reward asset oracle is compatible with IEACAggregator proxy.
+      * This check is enforced for integrators to be able to show incentives at
+      * the current Aave UI without the need to setup an external price registry
+      * @param reward The address of the reward to set the price aggregator
+-     * @param rewardOracle The address of price aggregator that follows AggregatorInterface interface
++     * @param rewardOracle The address of price aggregator that follows IEACAggregatorProxy interface
+      */
+     function setRewardOracle(
+         address reward,
+-        AggregatorInterface rewardOracle
++        IEACAggregatorProxy rewardOracle
+     ) external;
+ 
+     /**
+      * @dev Get the price aggregator oracle address
+@@ -117,10 +117,10 @@
+      *   uint40 distributionEnd: The end of the distribution of the incentives for an asset
+      *   address asset: The asset address to incentivize
+      *   address reward: The reward token address
+      *   ITransferStrategy transferStrategy: The TransferStrategy address with the install hook and claim logic.
+-     *   AggregatorInterface rewardOracle: The Price Oracle of a reward to visualize the incentives at the UI Frontend.
+-     *                                     Must follow Chainlink Aggregator AggregatorInterface interface to be compatible.
++     *   IEACAggregatorProxy rewardOracle: The Price Oracle of a reward to visualize the incentives at the UI Frontend.
++     *                                     Must follow Chainlink Aggregator IEACAggregatorProxy interface to be compatible.
+      */
+     function configureAssets(
+         RewardsDataTypes.RewardsConfigInput[] memory config
+     ) external;
