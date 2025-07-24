@@ -82,4 +82,28 @@ contract MathUtilsTests is Test {
       166666716666676666667666666666666600000000000000
     );
   }
+
+  function testMulDivCeil_WithRemainder() external pure {
+    assertEq(MathUtils.mulDivCeil(5, 5, 3), 9); // 25 / 3 = 8.333 -> ceil -> 9
+  }
+
+  function testMulDivCeil_NoRemainder() external pure {
+    assertEq(MathUtils.mulDivCeil(12, 6, 4), 18); // 72 / 4 = 18, no ceil
+  }
+
+  function testMulDivCeil_ZeroAOrB() external pure {
+    assertEq(MathUtils.mulDivCeil(0, 10, 5), 0);
+    assertEq(MathUtils.mulDivCeil(10, 0, 5), 0);
+  }
+
+  function testMulDivCeil_RevertOnDivByZero() external {
+    vm.expectRevert();
+    MathUtils.mulDivCeil(10, 10, 0);
+  }
+
+  function testMulDivCeil_RevertOnOverflow() external {
+    uint256 max = type(uint256).max;
+    vm.expectRevert();
+    MathUtils.mulDivCeil(max, 2, 1); // max * 2 will overflow
+  }
 }
