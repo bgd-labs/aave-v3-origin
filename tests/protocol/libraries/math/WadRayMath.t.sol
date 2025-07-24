@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import 'forge-std/Test.sol';
 import {WadRayMath} from '../../../../src/contracts/protocol/libraries/math/WadRayMath.sol';
 
+/// forge-config: default.allow_internal_expect_revert = true
 contract WadRayMathTests is Test {
   function test_constants() public pure {
     assertEq(WadRayMath.WAD, 1e18, 'wad');

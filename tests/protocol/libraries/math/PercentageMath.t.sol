@@ -5,6 +5,7 @@ import 'forge-std/Test.sol';
 
 import {PercentageMath} from '../../../../src/contracts/protocol/libraries/math/PercentageMath.sol';
 
+/// forge-config: default.allow_internal_expect_revert = true
 contract PercentageMathTests is Test {
   function test_constants() public pure {
     assertEq(PercentageMath.PERCENTAGE_FACTOR, 1e4, 'percentage factor');

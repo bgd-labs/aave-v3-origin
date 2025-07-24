@@ -5,6 +5,7 @@ import 'forge-std/Test.sol';
 
 import {MathUtils} from '../../../../src/contracts/protocol/libraries/math/MathUtils.sol';
 
+/// forge-config: default.allow_internal_expect_revert = true
 contract MathUtilsTests is Test {
   function test_constants() public pure {
     assertEq(MathUtils.SECONDS_PER_YEAR, 365 days);
