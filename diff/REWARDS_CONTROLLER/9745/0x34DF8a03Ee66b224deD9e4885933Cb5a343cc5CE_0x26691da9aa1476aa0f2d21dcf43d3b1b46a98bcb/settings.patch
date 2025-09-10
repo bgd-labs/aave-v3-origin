@@ -1,0 +1,71 @@
+Index: settings
+===================================================================
+--- settings
++++ settings
+@@ -19,52 +19,44 @@
+     "bytecodeHash": "none",
+     "appendCBOR": true
+   },
+   "outputSelection": {
+-    "src/contracts/rewards/RewardsController.sol": {
+-      "RewardsController": [
+-        "*"
+-      ]
+-    },
+     "*": {
+       "*": [
+-        "abi",
+         "evm.bytecode",
+         "evm.deployedBytecode",
+-        "evm.methodIdentifiers",
+-        "metadata",
+         "devdoc",
+         "userdoc",
+-        "storageLayout",
+-        "evm.gasEstimates"
+-      ],
+-      "": [
+-        "ast"
++        "metadata",
++        "abi"
+       ]
+     }
+   },
+-  "evmVersion": "cancun",
++  "evmVersion": "shanghai",
+   "viaIR": false,
+   "libraries": {
+     "src/contracts/protocol/libraries/logic/BorrowLogic.sol": {
+-      "BorrowLogic": "0xFeD9871528E713B5038c4c44BbE7a315f56cAdc6"
++      "BorrowLogic": "0x62325c94E1c49dcDb5937726aB5D8A4c37bCAd36"
+     },
++    "src/contracts/protocol/libraries/logic/BridgeLogic.sol": {
++      "BridgeLogic": "0x621Ef86D8A5C693a06295BC288B95C12D4CE4994"
++    },
+     "src/contracts/protocol/libraries/logic/ConfiguratorLogic.sol": {
+-      "ConfiguratorLogic": "0x186f45b6e33fCF531c1542509B199646Eb7fa968"
++      "ConfiguratorLogic": "0x09e88e877B39D883BAFd46b65E7B06CC56963041"
+     },
+     "src/contracts/protocol/libraries/logic/EModeLogic.sol": {
+-      "EModeLogic": "0xD1bddC05A3BB5A7907d82A1b4F1E21dBCE69c3d5"
++      "EModeLogic": "0xC31d2362fAeD85dF79d0bec99693D0EB0Abd3f74"
+     },
+     "src/contracts/protocol/libraries/logic/FlashLoanLogic.sol": {
+-      "FlashLoanLogic": "0x50a4646D4f5Cc0e45051bF4f222D02fA39eC749D"
++      "FlashLoanLogic": "0x34039100cc9584Ae5D741d322e16d0d18CEE8770"
+     },
+     "src/contracts/protocol/libraries/logic/LiquidationLogic.sol": {
+-      "LiquidationLogic": "0x36Ae486289bB807C3C79A1427b9c3D934294ef43"
++      "LiquidationLogic": "0x4731bF01583F991278692E8727d0700a00A1fBBf"
+     },
+     "src/contracts/protocol/libraries/logic/PoolLogic.sol": {
+-      "PoolLogic": "0xE51B69e5722Bf547866A4d7Bc190c6e81b626806"
++      "PoolLogic": "0xf8C97539934ee66a67C26010e8e027D77E821B0C"
+     },
+     "src/contracts/protocol/libraries/logic/SupplyLogic.sol": {
+-      "SupplyLogic": "0x034Fd14b9Ae6bB066a1F9f85A55e990b0b25c168"
++      "SupplyLogic": "0x185477906B46D9b8DE0DEB73A1bBfb87b5b51BC3"
+     }
+   }
+ }
+\ No newline at end of file
