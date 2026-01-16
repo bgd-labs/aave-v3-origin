@@ -1,0 +1,16 @@
+Index: settings
+===================================================================
+--- settings
++++ settings
+@@ -30,8 +30,7 @@
+         "abi"
+       ]
+     }
+   },
+-  "evmVersion": "shanghai",
+-  "viaIR": false,
+-  "libraries": {}
++  "evmVersion": "cancun",
++  "viaIR": false
+ }
+\ No newline at end of file

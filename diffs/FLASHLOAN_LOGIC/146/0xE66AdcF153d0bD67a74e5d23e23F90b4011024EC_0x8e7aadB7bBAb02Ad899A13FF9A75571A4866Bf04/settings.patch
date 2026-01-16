@@ -1,0 +1,15 @@
+Index: settings
+===================================================================
+--- settings
++++ settings
+@@ -30,9 +30,9 @@
+         "abi"
+       ]
+     }
+   },
+-  "evmVersion": "shanghai",
++  "evmVersion": "cancun",
+   "viaIR": false,
+   "libraries": {
+     "src/contracts/protocol/libraries/logic/FlashLoanLogic.sol": {
+       "BorrowLogic": "0x1fb8f7c906cddd28b42ae6eb76abc04a91188635"
