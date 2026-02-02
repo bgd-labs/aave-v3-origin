@@ -1,0 +1,14 @@
+Index: settings
+===================================================================
+--- settings
++++ settings
+@@ -39,7 +39,6 @@
+       ]
+     }
+   },
+   "evmVersion": "cancun",
+-  "viaIR": false,
+-  "libraries": {}
++  "viaIR": false
+ }
+\ No newline at end of file

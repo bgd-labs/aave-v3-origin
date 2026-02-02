@@ -1,0 +1,18 @@
+Index: src/contracts/extensions/stata-token/StataTokenFactory.sol
+===================================================================
+--- src/contracts/extensions/stata-token/StataTokenFactory.sol
++++ src/contracts/extensions/stata-token/StataTokenFactory.sol
+@@ -30,13 +30,8 @@
+ 
+     mapping(address => address) internal _underlyingToStataToken;
+     address[] internal _stataTokens;
+ 
+-    event StataTokenCreated(
+-        address indexed stataToken,
+-        address indexed underlying
+-    );
+-
+     constructor(
+         IPool pool,
+         address initialOwner,
+         ITransparentProxyFactory transparentProxyFactory,

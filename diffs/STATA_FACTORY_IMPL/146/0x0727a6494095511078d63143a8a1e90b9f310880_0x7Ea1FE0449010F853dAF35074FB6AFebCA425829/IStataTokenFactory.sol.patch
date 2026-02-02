@@ -1,0 +1,18 @@
+Index: src/contracts/extensions/stata-token/interfaces/IStataTokenFactory.sol
+===================================================================
+--- src/contracts/extensions/stata-token/interfaces/IStataTokenFactory.sol
++++ src/contracts/extensions/stata-token/interfaces/IStataTokenFactory.sol
+@@ -4,8 +4,13 @@
+ import {ITransparentProxyFactory} from "solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol";
+ import {IPool, IPoolAddressesProvider} from "../../../interfaces/IPool.sol";
+ 
+ interface IStataTokenFactory {
++    event StataTokenCreated(
++        address indexed stataToken,
++        address indexed underlying
++    );
++
+     error NotListedUnderlying(address underlying);
+ 
+     /**
+      * @notice The pool associated with the factory.
