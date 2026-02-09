@@ -1,0 +1,17 @@
+Index: lib/aave-v3-origin/src/contracts/extensions/v3-config-engine/libraries/PriceFeedEngine.sol
+===================================================================
+--- lib/aave-v3-origin/src/contracts/extensions/v3-config-engine/libraries/PriceFeedEngine.sol
++++ lib/aave-v3-origin/src/contracts/extensions/v3-config-engine/libraries/PriceFeedEngine.sol
+@@ -29,12 +29,8 @@
+             require(
+                 AggregatorInterface(updates[i].priceFeed).latestAnswer() > 0,
+                 "FEED_SHOULD_RETURN_POSITIVE_PRICE"
+             );
+-            require(
+-                AggregatorInterface(updates[i].priceFeed).decimals() == 8,
+-                "FEED_MUST_USE_8_DECIMALS"
+-            );
+             assets[i] = updates[i].asset;
+             sources[i] = updates[i].priceFeed;
+         }
+ 

@@ -1,0 +1,46 @@
+Index: settings
+===================================================================
+--- settings
++++ settings
+@@ -8,20 +8,17 @@
+     "aave-address-book/=lib/adi-deploy/lib/aave-helpers/lib/aave-address-book/src/",
+     "aave-v3-origin/=lib/adi-deploy/lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/",
+     "adi-deploy/=lib/adi-deploy/",
+     "@openzeppelin/=lib/adi-deploy/lib/aave-delivery-infrastructure/lib/openzeppelin-contracts/",
+-    "@openzeppelin/contracts-upgradeable/=lib/adi-deploy/lib/aave-delivery-infrastructure/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/contracts/",
+-    "@openzeppelin/contracts/=lib/adi-deploy/lib/aave-delivery-infrastructure/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/",
+     "aave-v3-origin-tests/=lib/adi-deploy/lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/tests/",
+     "adi-scripts/=lib/adi-deploy/lib/aave-delivery-infrastructure/scripts/",
+     "adi-tests/=lib/adi-deploy/lib/aave-delivery-infrastructure/tests/",
+     "adi/=lib/adi-deploy/lib/aave-delivery-infrastructure/src/contracts/",
+-    "ds-test/=lib/adi-deploy/lib/aave-delivery-infrastructure/lib/solidity-utils/lib/forge-std/lib/ds-test/src/",
+-    "erc4626-tests/=lib/adi-deploy/lib/aave-delivery-infrastructure/lib/openzeppelin-contracts/lib/erc4626-tests/",
++    "ds-test/=lib/adi-deploy/lib/aave-delivery-infrastructure/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/forge-std/lib/ds-test/src/",
++    "erc4626-tests/=lib/adi-deploy/lib/aave-delivery-infrastructure/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/erc4626-tests/",
+     "halmos-cheatcodes/=lib/adi-deploy/lib/aave-delivery-infrastructure/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/halmos-cheatcodes/src/",
+     "hyperlane-monorepo/=lib/adi-deploy/lib/aave-delivery-infrastructure/lib/hyperlane-monorepo/solidity/contracts/",
+-    "openzeppelin-contracts-upgradeable/=lib/adi-deploy/lib/aave-delivery-infrastructure/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/",
+-    "openzeppelin/=lib/adi-deploy/lib/aave-delivery-infrastructure/lib/openzeppelin-contracts/contracts/"
++    "openzeppelin-contracts-upgradeable/=lib/adi-deploy/lib/aave-delivery-infrastructure/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/"
+   ],
+   "optimizer": {
+     "enabled": true,
+     "runs": 200
+@@ -35,15 +32,11 @@
+     "*": {
+       "*": [
+         "evm.bytecode",
+         "evm.deployedBytecode",
+-        "devdoc",
+-        "userdoc",
+-        "metadata",
+         "abi"
+       ]
+     }
+   },
+   "evmVersion": "shanghai",
+-  "viaIR": false,
+-  "libraries": {}
++  "viaIR": false
+ }
+\ No newline at end of file

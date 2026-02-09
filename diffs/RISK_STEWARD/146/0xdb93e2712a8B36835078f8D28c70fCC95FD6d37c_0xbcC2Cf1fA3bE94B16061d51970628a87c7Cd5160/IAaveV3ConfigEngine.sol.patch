@@ -1,0 +1,79 @@
+Index: lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/contracts/extensions/v3-config-engine/IAaveV3ConfigEngine.sol
+===================================================================
+--- lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/contracts/extensions/v3-config-engine/IAaveV3ConfigEngine.sol
++++ lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/contracts/extensions/v3-config-engine/IAaveV3ConfigEngine.sol
+@@ -76,9 +76,8 @@
+      *   supplyCap: 100_000, // 100k AAVE
+      *   borrowCap: 60_000, // 60k AAVE
+      *   debtCeiling: 100_000, // 100k USD
+      *   liqProtocolFee: 10_00, // 10%
+-     *   eModeCategory: 0, // No category
+      * }
+      */
+     struct Listing {
+         address asset;
+@@ -191,15 +190,17 @@
+      *   asset: AaveV3EthereumAssets.rETH_UNDERLYING,
+      *   eModeCategory: 1, // ETH correlated
+      *   borrowable: EngineFlags.ENABLED,
+      *   collateral: EngineFlags.KEEP_CURRENT,
++     *   ltvzero: EngineFlags.KEEP_CURRENT
+      * })
+      */
+     struct AssetEModeUpdate {
+         address asset;
+         uint8 eModeCategory;
+         uint256 borrowable;
+         uint256 collateral;
++        uint256 ltvzero;
+     }
+ 
+     /**
+      * @dev Example (mock):
+@@ -220,8 +221,28 @@
+     }
+ 
+     /**
+      * @dev Example (mock):
++     * EModeCategoryUpdate({
++     *   ltv: 60_00,
++     *   liqThreshold: 70_00,
++     *   liqBonus: 3_00,
++     *   label: 'WETH USDC',
++     *   borrowables:[USDC],
++     *   collaterals:[ETH]
++     * })
++     */
++    struct EModeCategoryCreation {
++        uint256 ltv;
++        uint256 liqThreshold;
++        uint256 liqBonus;
++        string label;
++        address[] borrowables;
++        address[] collaterals;
++    }
++
++    /**
++     * @dev Example (mock):
+      * RateStrategyUpdate({
+      *   asset: AaveV3OptimismAssets.USDT_UNDERLYING,
+      *   params: InterestRateInputData({
+      *     optimalUsageRatio: _bpsToRay(80_00),
+@@ -298,8 +319,17 @@
+      */
+     function updateBorrowSide(BorrowUpdate[] memory updates) external;
+ 
+     /**
++     * @notice Performs creation of new e-mode categories, in the Aave pool configured in this engine instance
++     * @param creations `EModeCategoryCreation[]` list of declarative creations containing the new parameters
++     *   More information on the documentation of the struct.
++     */
++    function createEModeCategories(
++        EModeCategoryCreation[] memory creations
++    ) external;
++
++    /**
+      * @notice Performs an update of the e-mode categories, in the Aave pool configured in this engine instance
+      * @param updates `EModeCategoryUpdate[]` list of declarative updates containing the new parameters
+      *   More information on the documentation of the struct.
+      */
