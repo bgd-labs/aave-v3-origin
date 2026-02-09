@@ -1,0 +1,20 @@
+Index: settings
+===================================================================
+--- settings
++++ settings
+@@ -30,12 +30,12 @@
+         "abi"
+       ]
+     }
+   },
+-  "evmVersion": "shanghai",
++  "evmVersion": "cancun",
+   "viaIR": false,
+   "libraries": {
+-    "src/contracts/protocol/libraries/logic/FlashLoanLogic.sol": {
++    "src/contracts/protocol/libraries/logic/BorrowLogic.sol": {
+       "BorrowLogic": "0x1fb8f7c906cddd28b42ae6eb76abc04a91188635"
+     }
+   }
+ }
+\ No newline at end of file

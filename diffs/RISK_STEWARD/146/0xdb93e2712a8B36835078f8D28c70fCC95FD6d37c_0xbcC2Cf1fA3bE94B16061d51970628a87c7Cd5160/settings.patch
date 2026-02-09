@@ -1,0 +1,60 @@
+Index: settings
+===================================================================
+--- settings
++++ settings
+@@ -1,5 +1,23 @@
+ {
++  "optimizer": {
++    "enabled": true,
++    "runs": 200
++  },
++  "metadata": {
++    "useLiteralContent": false,
++    "bytecodeHash": "ipfs",
++    "appendCBOR": true
++  },
++  "outputSelection": {
++    "*": {
++      "*": [
++        "evm.bytecode",
++        "evm.deployedBytecode",
++        "abi"
++      ]
++    }
++  },
+   "remappings": [
+     "aave-helpers/=lib/aave-helpers/",
+     "forge-std/=lib/aave-helpers/lib/forge-std/src/",
+     "aave-address-book/=lib/aave-helpers/lib/aave-address-book/src/",
+@@ -17,29 +35,7 @@
+     "halmos-cheatcodes/=lib/aave-capo/lib/aave-address-book/lib/aave-v3-origin/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/halmos-cheatcodes/src/",
+     "openzeppelin-contracts-upgradeable/=lib/aave-capo/lib/aave-address-book/lib/aave-v3-origin/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/",
+     "openzeppelin-contracts/=lib/aave-capo/lib/aave-address-book/lib/aave-v3-origin/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/"
+   ],
+-  "optimizer": {
+-    "enabled": true,
+-    "runs": 200
+-  },
+-  "metadata": {
+-    "useLiteralContent": false,
+-    "bytecodeHash": "ipfs",
+-    "appendCBOR": true
+-  },
+-  "outputSelection": {
+-    "*": {
+-      "*": [
+-        "evm.bytecode",
+-        "evm.deployedBytecode",
+-        "devdoc",
+-        "userdoc",
+-        "metadata",
+-        "abi"
+-      ]
+-    }
+-  },
+   "evmVersion": "cancun",
+-  "viaIR": false,
+-  "libraries": {}
++  "viaIR": false
+ }
+\ No newline at end of file

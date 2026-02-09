@@ -1,0 +1,77 @@
+Index: settings
+===================================================================
+--- settings
++++ settings
+@@ -13,8 +13,28 @@
+   "optimizer": {
+     "enabled": true,
+     "runs": 200
+   },
++  "libraries": {
++    "src/contracts/protocol/libraries/logic/BorrowLogic.sol": {
++      "BorrowLogic": "0x1Fb8f7C906cddD28B42ae6Eb76abC04A91188635"
++    },
++    "src/contracts/protocol/libraries/logic/ConfiguratorLogic.sol": {
++      "ConfiguratorLogic": "0x186f45b6e33fCF531c1542509B199646Eb7fa968"
++    },
++    "src/contracts/protocol/libraries/logic/FlashLoanLogic.sol": {
++      "FlashLoanLogic": "0x8e7aadB7bBAb02Ad899A13FF9A75571A4866Bf04"
++    },
++    "src/contracts/protocol/libraries/logic/LiquidationLogic.sol": {
++      "LiquidationLogic": "0x8dc095F287dBEBD9e15f75BB3DfBF18389BB8104"
++    },
++    "src/contracts/protocol/libraries/logic/PoolLogic.sol": {
++      "PoolLogic": "0x25Ed699a052B820d772765E26Ed4dD9f0A26F3E5"
++    },
++    "src/contracts/protocol/libraries/logic/SupplyLogic.sol": {
++      "SupplyLogic": "0x33654b16A4De97bCE05d7dD06803Bf1066f3123C"
++    }
++  },
+   "metadata": {
+     "useLiteralContent": false,
+     "bytecodeHash": "none",
+     "appendCBOR": true
+@@ -23,40 +43,11 @@
+     "*": {
+       "*": [
+         "evm.bytecode",
+         "evm.deployedBytecode",
+-        "devdoc",
+-        "userdoc",
+-        "metadata",
+         "abi"
+       ]
+     }
+   },
+-  "evmVersion": "shanghai",
+-  "viaIR": false,
+-  "libraries": {
+-    "src/contracts/protocol/libraries/logic/BorrowLogic.sol": {
+-      "BorrowLogic": "0x62325c94E1c49dcDb5937726aB5D8A4c37bCAd36"
+-    },
+-    "src/contracts/protocol/libraries/logic/BridgeLogic.sol": {
+-      "BridgeLogic": "0x621Ef86D8A5C693a06295BC288B95C12D4CE4994"
+-    },
+-    "src/contracts/protocol/libraries/logic/ConfiguratorLogic.sol": {
+-      "ConfiguratorLogic": "0x09e88e877B39D883BAFd46b65E7B06CC56963041"
+-    },
+-    "src/contracts/protocol/libraries/logic/EModeLogic.sol": {
+-      "EModeLogic": "0xC31d2362fAeD85dF79d0bec99693D0EB0Abd3f74"
+-    },
+-    "src/contracts/protocol/libraries/logic/FlashLoanLogic.sol": {
+-      "FlashLoanLogic": "0x34039100cc9584Ae5D741d322e16d0d18CEE8770"
+-    },
+-    "src/contracts/protocol/libraries/logic/LiquidationLogic.sol": {
+-      "LiquidationLogic": "0x4731bF01583F991278692E8727d0700a00A1fBBf"
+-    },
+-    "src/contracts/protocol/libraries/logic/PoolLogic.sol": {
+-      "PoolLogic": "0xf8C97539934ee66a67C26010e8e027D77E821B0C"
+-    },
+-    "src/contracts/protocol/libraries/logic/SupplyLogic.sol": {
+-      "SupplyLogic": "0x185477906B46D9b8DE0DEB73A1bBfb87b5b51BC3"
+-    }
+-  }
++  "evmVersion": "cancun",
++  "viaIR": false
+ }
+\ No newline at end of file

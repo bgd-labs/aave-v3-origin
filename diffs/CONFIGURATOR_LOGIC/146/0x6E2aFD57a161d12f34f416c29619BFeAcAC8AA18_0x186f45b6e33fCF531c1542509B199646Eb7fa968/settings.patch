@@ -1,0 +1,23 @@
+Index: settings
+===================================================================
+--- settings
++++ settings
+@@ -23,15 +23,11 @@
+     "*": {
+       "*": [
+         "evm.bytecode",
+         "evm.deployedBytecode",
+-        "devdoc",
+-        "userdoc",
+-        "metadata",
+         "abi"
+       ]
+     }
+   },
+-  "evmVersion": "shanghai",
+-  "viaIR": false,
+-  "libraries": {}
++  "evmVersion": "cancun",
++  "viaIR": false
+ }
+\ No newline at end of file

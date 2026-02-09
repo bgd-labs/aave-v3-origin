@@ -1,0 +1,56 @@
+Index: lib/aave-v3-origin/src/contracts/extensions/v3-config-engine/libraries/CollateralEngine.sol
+===================================================================
+--- lib/aave-v3-origin/src/contracts/extensions/v3-config-engine/libraries/CollateralEngine.sol
++++ lib/aave-v3-origin/src/contracts/extensions/v3-config-engine/libraries/CollateralEngine.sol
+@@ -86,23 +86,20 @@
+                         100_00 + updates[i].liqBonus
+                     );
+                 }
+ 
+-                if (updates[i].debtCeiling != EngineFlags.KEEP_CURRENT) {
+-                    // Debt ceiling should only be set when liquidation threshold is non-zero
+-                    // Fetch current value since any updates above would already be applied
+-                    DataTypes.ReserveConfigurationMap
+-                        memory configuration = pool.getConfiguration(
+-                            updates[i].asset
+-                        );
+-                    (, uint256 currentLiqThreshold, , , ) = configuration
+-                        .getParams();
+-
++                if (updates[i].liqProtocolFee != EngineFlags.KEEP_CURRENT) {
+                     require(
+-                        currentLiqThreshold != 0,
+-                        "DEBT_CEILING_REQUIRES_LT_NON_ZERO"
++                        updates[i].liqProtocolFee < 100_00,
++                        "INVALID_LIQ_PROTOCOL_FEE"
+                     );
++                    poolConfigurator.setLiquidationProtocolFee(
++                        updates[i].asset,
++                        updates[i].liqProtocolFee
++                    );
++                }
+ 
++                if (updates[i].debtCeiling != EngineFlags.KEEP_CURRENT) {
+                     // For reference, this is to simplify the interactions with the Aave protocol,
+                     // as there the definition is with 2 decimals. We don't see any reason to set
+                     // a debt ceiling involving .something USD, so we simply don't allow to do it
+                     poolConfigurator.setDebtCeiling(
+@@ -110,18 +107,7 @@
+                         updates[i].debtCeiling * 100
+                     );
+                 }
+             }
+-
+-            if (updates[i].liqProtocolFee != EngineFlags.KEEP_CURRENT) {
+-                require(
+-                    updates[i].liqProtocolFee < 100_00,
+-                    "INVALID_LIQ_PROTOCOL_FEE"
+-                );
+-                poolConfigurator.setLiquidationProtocolFee(
+-                    updates[i].asset,
+-                    updates[i].liqProtocolFee
+-                );
+-            }
+         }
+     }
+ }
