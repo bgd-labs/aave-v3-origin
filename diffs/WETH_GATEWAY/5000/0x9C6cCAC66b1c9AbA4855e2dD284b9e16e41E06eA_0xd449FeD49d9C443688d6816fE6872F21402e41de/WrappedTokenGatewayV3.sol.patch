@@ -1,0 +1,37 @@
+Index: src/contracts/helpers/WrappedTokenGatewayV3.sol
+===================================================================
+--- src/contracts/helpers/WrappedTokenGatewayV3.sol
++++ src/contracts/helpers/WrappedTokenGatewayV3.sol
+@@ -1,9 +1,9 @@
+ // SPDX-License-Identifier: BUSL-1.1
+ pragma solidity ^0.8.10;
+ 
+ import {Ownable} from "../dependencies/openzeppelin/contracts/Ownable.sol";
+-import {IERC20} from "../dependencies/openzeppelin/contracts/IERC20.sol";
++import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+ import {GPv2SafeERC20} from "../dependencies/gnosis/contracts/GPv2SafeERC20.sol";
+ import {IWETH} from "./interfaces/IWETH.sol";
+ import {IPool} from "../interfaces/IPool.sol";
+ import {IAToken} from "../interfaces/IAToken.sol";
+@@ -68,8 +68,10 @@
+         // if amount is equal to type(uint256).max, the user wants to redeem everything
+         if (amount == type(uint256).max) {
+             amountToWithdraw = userBalance;
+         }
++        // aWETH is trusted, disabling warning
++        // forge-lint: disable-next-line(erc20-unchecked-transfer)
+         aWETH.transferFrom(msg.sender, address(this), amountToWithdraw);
+         POOL.withdraw(address(WETH), amountToWithdraw, address(this));
+         WETH.withdraw(amountToWithdraw);
+         _safeTransferETH(to, amountToWithdraw);
+@@ -167,8 +169,10 @@
+                 permitR,
+                 permitS
+             )
+         {} catch {}
++        // aWETH is trusted, disabling warning
++        // forge-lint: disable-next-line(erc20-unchecked-transfer)
+         aWETH.transferFrom(msg.sender, address(this), amountToWithdraw);
+         POOL.withdraw(address(WETH), amountToWithdraw, address(this));
+         WETH.withdraw(amountToWithdraw);
+         _safeTransferETH(to, amountToWithdraw);

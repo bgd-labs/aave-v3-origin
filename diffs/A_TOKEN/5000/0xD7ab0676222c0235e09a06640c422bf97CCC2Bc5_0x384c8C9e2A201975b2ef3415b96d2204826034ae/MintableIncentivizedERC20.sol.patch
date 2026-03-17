@@ -1,0 +1,12 @@
+===================================================================
+--- lib/aave-v3-origin/src/contracts/protocol/tokenization/base/MintableIncentivizedERC20.sol
++++ src/contracts/protocol/tokenization/base/MintableIncentivizedERC20.sol
+@@ -1,8 +1,7 @@
+ // SPDX-License-Identifier: MIT
+ pragma solidity ^0.8.10;
+ 
+-import {IAaveIncentivesController} from "../../../interfaces/IAaveIncentivesController.sol";
+ import {IPool} from "../../../interfaces/IPool.sol";
+ import {IncentivizedERC20} from "./IncentivizedERC20.sol";
+ 
+ /**
