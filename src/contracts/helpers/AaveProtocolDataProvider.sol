@@ -285,4 +285,13 @@ contract AaveProtocolDataProvider is IPoolDataProvider {
   function getReserveDeficit(address asset) external view override returns (uint256) {
     return POOL.getReserveDeficit(asset);
   }
+
+  // ------------------------------------------------------------------
+  //                    INTEGRATOR RATE HELPERS
+  // ------------------------------------------------------------------
+
+  /// @inheritdoc IPoolDataProvider
+  function getLiquidityRate(address asset) external view override returns (uint256) {
+    return POOL.getReserveData(asset).currentLiquidityRate;
+  }
 }
