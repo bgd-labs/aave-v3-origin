@@ -261,4 +261,18 @@ interface IPoolDataProvider {
    * @return The reserve deficit
    */
   function getReserveDeficit(address asset) external view returns (uint256);
+
+  /**
+   * @notice Returns the current supply APR for a reserve as a single-word view.
+   * @dev On-chain callers outside of Solidity — Vyper strategies, yield aggregators,
+   *      rebalancers — need to read `currentLiquidityRate` without decoding either the
+   *      full `DataTypes.ReserveDataLegacy` struct from `IPool.getReserveData()` or the
+   *      twelve-field tuple from `AaveProtocolDataProvider.getReserveData()`.  Both paths
+   *      require multi-word return handling that is error-prone in non-ABI-native
+   *      environments and adds unnecessary complexity in Solidity callers that only need
+   *      the rate.  This view surfaces the same value as a typed single-word return.
+   * @param asset The address of the underlying asset of the reserve
+   * @return The current supply APR for the reserve, in RAY units (1e27 = 100%)
+   */
+  function getLiquidityRate(address asset) external view returns (uint256);
 }
