@@ -1,0 +1,15 @@
+Index: src/contracts/extensions/stata-token/interfaces/IStataTokenFactory.sol
+===================================================================
+--- src/contracts/extensions/stata-token/interfaces/IStataTokenFactory.sol
++++ src/contracts/extensions/stata-token/interfaces/IStataTokenFactory.sol
+@@ -1,9 +1,9 @@
+ // SPDX-License-Identifier: MIT
+ pragma solidity ^0.8.10;
+ 
+ import {ITransparentProxyFactory} from "solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol";
+-import {IPool, IPoolAddressesProvider} from "../../../interfaces/IPool.sol";
++import {IPool} from "../../../interfaces/IPool.sol";
+ 
+ interface IStataTokenFactory {
+     event StataTokenCreated(
+         address indexed stataToken,

@@ -1,0 +1,14 @@
+===================================================================
+--- lib/aave-v3-origin/src/contracts/extensions/v3-config-engine/libraries/ListingEngine.sol
++++ src/contracts/extensions/v3-config-engine/libraries/ListingEngine.sol
+@@ -1,9 +1,9 @@
+ // SPDX-License-Identifier: BUSL-1.1
+ pragma solidity ^0.8.18;
+ 
+ import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
+-import {IAaveV3ConfigEngine as IEngine, IPoolConfigurator, IPool, IDefaultInterestRateStrategyV2} from "../IAaveV3ConfigEngine.sol";
++import {IAaveV3ConfigEngine as IEngine, IPoolConfigurator, IDefaultInterestRateStrategyV2} from "../IAaveV3ConfigEngine.sol";
+ import {PriceFeedEngine} from "./PriceFeedEngine.sol";
+ import {CapsEngine} from "./CapsEngine.sol";
+ import {BorrowEngine} from "./BorrowEngine.sol";
+ import {CollateralEngine} from "./CollateralEngine.sol";
