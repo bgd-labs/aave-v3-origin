@@ -1,0 +1,40 @@
+===================================================================
+--- src/contracts/protocol/libraries/types/DataTypes.sol
++++ lib/aave-v3-origin-private/src/contracts/protocol/libraries/types/DataTypes.sol
+@@ -212,10 +212,8 @@
+         uint256 amount;
+         InterestRateMode interestRateMode;
+         address onBehalfOf;
+         bool useATokens;
+-        address oracle;
+-        uint8 userEModeCategory;
+     }
+ 
+     struct ExecuteWithdrawParams {
+         address user;
+@@ -237,11 +235,11 @@
+     struct FinalizeTransferParams {
+         address asset;
+         address from;
+         address to;
+-        uint256 scaledAmount;
+-        uint256 scaledBalanceFromBefore;
+-        uint256 scaledBalanceToBefore;
++        uint256 amount;
++        uint256 balanceFromBefore;
++        uint256 balanceToBefore;
+         address oracle;
+         uint8 fromEModeCategory;
+     }
+ 
+@@ -294,9 +292,9 @@
+         ReserveCache reserveCache;
+         UserConfigurationMap userConfig;
+         address asset;
+         address userAddress;
+-        uint256 amountScaled;
++        uint256 amount;
+         InterestRateMode interestRateMode;
+         address oracle;
+         uint8 userEModeCategory;
+         address priceOracleSentinel;
